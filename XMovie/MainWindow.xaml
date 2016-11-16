@@ -6,8 +6,76 @@
         xmlns:Controls="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
         xmlns:local="clr-namespace:XMovie"
         mc:Ignorable="d"
+        ResizeMode="CanResizeWithGrip"
         Title="XMovie" Height="350" Width="525">
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+
+        </Grid.RowDefinitions>
+
+        <!-- 0.Menu -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10,5" Height="30">
+        </StackPanel>
         
+        <!-- 1.Separator -->
+        <Border Grid.Row="1" BorderThickness="1" BorderBrush="Gray" Height="1" Margin="10,0"/>
+
+        <!-- 2.Search Menu -->
+        <Grid Grid.Row="2">
+        </Grid>
+
+        <!-- 3.Separator -->
+        <Border Grid.Row="3" BorderThickness="1" BorderBrush="Gray" Height="1" Margin="10,0"/>
+
+        <!-- 4.Main -->
+        <Grid Grid.Row="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="300*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="120*" x:Name="infoViewColumn"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- -->
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="300*" />
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="120*" x:Name="logViewRow"/>
+                </Grid.RowDefinitions>
+                
+                <!-- Movie ListBox -->
+                <ListBox x:Name="movieListView" Grid.Row="0" Grid.Column="0">
+                </ListBox>
+
+                <!-- Separator -->
+                <GridSplitter Grid.Row="1" Width="Auto" Height="5" HorizontalAlignment="Stretch" VerticalAlignment="Center" />
+
+                <!-- Logs -->
+                <Grid Grid.Row="2" >
+                </Grid>
+
+            </Grid>
+
+            <!-- Separator -->
+            <GridSplitter Grid.Column="1" Width="5" Height="Auto" HorizontalAlignment="Center" VerticalAlignment="Stretch" />
+
+            <!-- Tags -->
+            <Grid Grid.Column="2" Grid.RowSpan="2">
+            </Grid>
+        </Grid>
+
+        <!-- 5. StatusBar -->
+        <Grid Grid.Row="5">
+            <StatusBar>
+                <StatusBarItem>XXX</StatusBarItem>
+            </StatusBar>
+        </Grid>
     </Grid>
 </Controls:MetroWindow>
