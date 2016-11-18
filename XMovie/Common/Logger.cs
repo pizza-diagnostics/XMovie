@@ -40,19 +40,9 @@ namespace XMovie.Common
             FireLogEvent(String.Format(fmt, args), LogLevel.Debug);
         }
 
-        public void Debug(object arg)
-        {
-            FireLogEvent(arg?.ToString(), LogLevel.Debug);
-        }
-
         public void Information(string fmt, params object[] args)
         {
             FireLogEvent(String.Format(fmt, args), LogLevel.Information);
-        }
-
-        public void Information(object arg)
-        {
-            FireLogEvent(arg?.ToString(), LogLevel.Information);
         }
 
         public void Warning(string fmt, params object[] args)
@@ -60,19 +50,9 @@ namespace XMovie.Common
             FireLogEvent(String.Format(fmt, args), LogLevel.Warning);
         }
 
-        public void Warning(object arg)
-        {
-            FireLogEvent(arg?.ToString(), LogLevel.Warning);
-        }
-
         public void Error(string fmt, params object[] args)
         {
             FireLogEvent(String.Format(fmt, args), LogLevel.Error);
-        }
-
-        public void Error(object arg)
-        {
-            FireLogEvent(arg?.ToString(), LogLevel.Error);
         }
 
         private void FireLogEvent(string message, LogLevel level)

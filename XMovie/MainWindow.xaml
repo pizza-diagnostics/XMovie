@@ -5,9 +5,11 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:Controls="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
         xmlns:local="clr-namespace:XMovie"
+        xmlns:common="clr-namespace:XMovie.Common"
         mc:Ignorable="d"
         ResizeMode="CanResizeWithGrip"
-        Title="XMovie" Height="350" Width="525">
+        Name="XMovieWindow"
+        Title="XMovie" Height="350" Width="525" Loaded="XMovieWindow_Loaded">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -61,7 +63,7 @@
                 <Grid Grid.Row="2" >
                     <ListView x:Name="LogListView" ItemsSource="{Binding}">
                         <ListView.ItemContainerStyle>
-                            <Style TargetType="ListView">
+                            <Style TargetType="ListViewItem">
                                 <Setter Property="BorderThickness" Value="0,0,0,1" />
                                 <Setter Property="BorderBrush" Value="LightGray" />
                                 <Setter Property="Template">
@@ -82,6 +84,18 @@
                                 <Setter Property="ToolTip" Value="{Binding Path=Message}" />
 
                                 <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=Level}" Value="{x:Static common:LogLevel.Error}">
+                                        <Setter Property="Background" Value="Red" />
+                                    </DataTrigger>
+                                    <Trigger Property="IsSelected" Value="true">
+                                        <Setter Property="Foreground" Value="#dfdfdf" />
+                                        <Setter Property="Background" Value="#576573" />
+                                    </Trigger>
+                                    <Trigger Property="IsMouseOver" Value="true">
+                                        <Setter Property="Background" Value="Gray" />
+                                        <Setter Property="Foreground" Value="White" />
+                                    </Trigger>
+
                                 </Style.Triggers>
                             </Style>
                         </ListView.ItemContainerStyle>
@@ -90,14 +104,14 @@
                                 <GridViewColumn Header="Time" Width="120">
                                     <GridViewColumn.CellTemplate>
                                         <DataTemplate>
-                                            <TextBlock Text="TODO"/>
+                                            <TextBlock Text="{Binding Path=Time, StringFormat=yyyy/MM/dd HH:mm:ss}"/>
                                         </DataTemplate>
                                     </GridViewColumn.CellTemplate>
                                 </GridViewColumn>
                                 <GridViewColumn Header="Message" Width="1000">
                                     <GridViewColumn.CellTemplate>
                                         <DataTemplate>
-                                            <TextBlock Text="TODO" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Text="{Binding Path=MessageSummary}" TextTrimming="CharacterEllipsis" />
                                         </DataTemplate>
                                     </GridViewColumn.CellTemplate>
                                 </GridViewColumn>

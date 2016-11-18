@@ -27,5 +27,13 @@ namespace XMovie.Common
         public DateTime Time { get; private set; }
         public string Message { get; private set; }
 
+        public string MessageSummary
+        {
+            get
+            {
+                var lines = Message.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+                return lines.First();
+            }
+        }
     }
 }
