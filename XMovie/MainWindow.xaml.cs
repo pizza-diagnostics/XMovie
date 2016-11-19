@@ -32,6 +32,21 @@ namespace XMovie
 
             logRecords = new ObservableCollection<LogRecord>();
             LogListView.DataContext = logRecords;
+
+            var tag = new DataModel.Tag()
+            {
+                Name = "foobarx"
+            };
+            var movie = new DataModel.Movie()
+            {
+                Path = "a"
+            };
+            using (var context = new XMovie.DataModel.XMovieContext())
+            {
+                context.Tags.Add(tag);
+                context.Movies.Add(movie);
+                context.SaveChanges();
+            }
         }
 
         private void XMovieWindow_Loaded(object sender, RoutedEventArgs e)
