@@ -13,7 +13,7 @@ namespace XMovie.Common
         private static readonly object syncObj = new Object();
         private static Logger instance = null;
 
-        public static event LogDelegate LogEvent;
+        public event LogDelegate LogEvent;
 
         private Logger() { }
 
@@ -35,29 +35,29 @@ namespace XMovie.Common
             }
         }
 
-        public void Debug(string fmt, params object[] args)
+        public void Debug(string msg)
         {
-            FireLogEvent(String.Format(fmt, args), LogLevel.Debug);
+            FireLogEvent(msg, LogLevel.Debug);
         }
 
-        public void Information(string fmt, params object[] args)
+        public void Information(string msg)
         {
-            FireLogEvent(String.Format(fmt, args), LogLevel.Information);
+            FireLogEvent(msg, LogLevel.Information);
         }
 
-        public void Warning(string fmt, params object[] args)
+        public void Warning(string msg)
         {
-            FireLogEvent(String.Format(fmt, args), LogLevel.Warning);
+            FireLogEvent(msg, LogLevel.Warning);
         }
 
-        public void Error(string fmt, params object[] args)
+        public void Error(string msg)
         {
-            FireLogEvent(String.Format(fmt, args), LogLevel.Error);
+            FireLogEvent(msg, LogLevel.Error);
         }
 
-        private void FireLogEvent(string message, LogLevel level)
+        private void FireLogEvent(string msg, LogLevel level)
         {
-            LogEvent?.Invoke(new LogRecord(message, level));
+            LogEvent?.Invoke(new LogRecord(msg, level));
         }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,22 +12,17 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using MahApps.Metro.Controls;
-using XMovie.Common;
 
-namespace XMovie
+namespace XMovie.Control
 {
     /// <summary>
-    /// MainWindow.xaml の相互作用ロジック
+    /// MovieItemControl.xaml の相互作用ロジック
     /// </summary>
-    public partial class MainWindow : MetroWindow
+    public partial class MovieItemControl : UserControl
     {
-        private Logger logger = Logger.Instace;
-
-        public MainWindow()
+        public MovieItemControl()
         {
             InitializeComponent();
         }
-
     }
 }

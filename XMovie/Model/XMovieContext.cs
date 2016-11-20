@@ -1,4 +1,4 @@
-﻿namespace XMovie.DataModel
+﻿namespace XMovie.Model
 {
     using System;
     using System.Data.Entity;
