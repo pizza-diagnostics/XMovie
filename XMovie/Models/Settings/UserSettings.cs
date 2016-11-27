@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -32,6 +33,7 @@ namespace XMovie.Models.Settings
         public WindowState MainWindowState { get; set; } = WindowState.Normal;
 
         public bool IsFileSearch { get; set; } = false;
+        public ObservableCollection<string> SearchHistories { get; set; } = new ObservableCollection<string>();
 
         public UserSettings()
         {

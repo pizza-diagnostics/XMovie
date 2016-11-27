@@ -121,6 +121,13 @@ namespace XMovie.ViewModels
             get { return userSettings.IsFileSearch; }
             set { userSettings.IsFileSearch = value; }
         }
+
+        public ObservableCollection<string> SearchHistories
+        {
+            get { return userSettings.SearchHistories; }
+            set { userSettings.SearchHistories = value; }
+        }
+
         #endregion
 
         #region Command
@@ -213,9 +220,26 @@ namespace XMovie.ViewModels
         }
         #endregion
 
+        private void AddSearchHistory(string keywords)
+        {
+            if (SearchHistories.Contains(keywords))
+            {
+                SearchHistories.Move(SearchHistories.IndexOf(keywords), 0);
+            }
+            else
+            {
+                SearchHistories.Insert(0, keywords);
+                if (SearchHistories.Count > 50)
+                {
+                    SearchHistories.RemoveAt(SearchHistories.Count - 1);
+                }
+            }
+        }
+
         private void SearchMovies(string keywords)
         {
-            // TODO: 検索歴の追加
+            // 検索歴の追加
+            AddSearchHistory(keywords);
 
             var keys = new List<string>(keywords.Split(new char[] { ',', ' ', '　', '、' }, StringSplitOptions.RemoveEmptyEntries));
             if (IsFileSearch)
@@ -234,6 +258,7 @@ namespace XMovie.ViewModels
             {
                 Movies.Clear();
                 var query = context.Movies.Select(m => m);
+                // ファイル検索の場合はキーワードのlike and
                 foreach (var path in pathKeys)
                 {
                     query = query.Where(m => m.Path.Contains(path));
