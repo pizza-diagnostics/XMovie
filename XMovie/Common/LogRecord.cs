@@ -32,7 +32,7 @@ namespace XMovie.Common
             get
             {
                 var lines = Message.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
-                return lines.First();
+                return lines.Length > 0 ? lines.First() : "";
             }
         }
     }

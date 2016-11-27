@@ -4,13 +4,11 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using XMovie.Common;
 
-namespace XMovie.ViewModel
+namespace XMovie.ViewModels
 {
     public class LogListViewModel : ViewModelBase
     {
         public ObservableCollection<LogRecord> LogRecords { get; private set; } = new ObservableCollection<LogRecord>();
-
-        public event EventHandler LogRecordAdded;
 
         public void LogViewLoaded()
         {

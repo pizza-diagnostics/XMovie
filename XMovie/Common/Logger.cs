@@ -35,29 +35,29 @@ namespace XMovie.Common
             }
         }
 
-        public void Debug(string msg)
+        public void Debug(object msg)
         {
             FireLogEvent(msg, LogLevel.Debug);
         }
 
-        public void Information(string msg)
+        public void Information(object msg)
         {
             FireLogEvent(msg, LogLevel.Information);
         }
 
-        public void Warning(string msg)
+        public void Warning(object msg)
         {
             FireLogEvent(msg, LogLevel.Warning);
         }
 
-        public void Error(string msg)
+        public void Error(object msg)
         {
             FireLogEvent(msg, LogLevel.Error);
         }
 
-        private void FireLogEvent(string msg, LogLevel level)
+        private void FireLogEvent(object msg, LogLevel level)
         {
-            LogEvent?.Invoke(new LogRecord(msg, level));
+            LogEvent?.Invoke(new LogRecord(msg.ToString(), level));
         }
     }
 }

@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace XMovie.Model
+namespace XMovie.Models
 {
     public class TagCategory
     {

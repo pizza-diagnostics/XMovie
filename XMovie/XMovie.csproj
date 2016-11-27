@@ -178,13 +178,19 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Common\FileDropBehavior.cs" />
+    <Compile Include="Common\RelayCommand.cs" />
     <Compile Include="Common\ScrollIntoViewBehavior.cs" />
-    <Compile Include="ViewModel\LogListViewModel.cs" />
-    <Compile Include="ViewModel\MainWindowViewModel.cs" />
-    <Compile Include="ViewModel\MovieItemViewModel.cs" />
-    <Compile Include="ViewModel\MovieListViewModel.cs" />
-    <Compile Include="ViewModel\ViewModelBase.cs" />
-    <Page Include="Control\MovieItemControl.xaml">
+    <Compile Include="Common\Util.cs" />
+    <Compile Include="Models\MovieImporter.cs" />
+    <Compile Include="Models\MovieImporterException.cs" />
+    <Compile Include="ViewModels\LogListViewModel.cs" />
+    <Compile Include="ViewModels\MainWindowViewModel.cs" />
+    <Compile Include="ViewModels\MovieItemViewModel.cs" />
+    <Compile Include="ViewModels\MovieListViewModel.cs" />
+    <Compile Include="ViewModels\UserSettingsViewModel.cs" />
+    <Compile Include="ViewModels\ViewModelBase.cs" />
+    <Page Include="Controls\MovieItemControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -198,15 +204,15 @@
     </Compile>
     <Compile Include="Common\Logger.cs" />
     <Compile Include="Common\LogRecord.cs" />
-    <Compile Include="Control\MovieItemControl.xaml.cs">
+    <Compile Include="Controls\MovieItemControl.xaml.cs">
       <DependentUpon>MovieItemControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Model\Movie.cs" />
-    <Compile Include="Model\Tag.cs" />
-    <Compile Include="Model\TagCategory.cs" />
-    <Compile Include="Model\TagMap.cs" />
-    <Compile Include="Model\Thumbnail.cs" />
-    <Compile Include="Model\XMovieContext.cs" />
+    <Compile Include="Models\Movie.cs" />
+    <Compile Include="Models\Tag.cs" />
+    <Compile Include="Models\TagCategory.cs" />
+    <Compile Include="Models\TagMap.cs" />
+    <Compile Include="Models\Thumbnail.cs" />
+    <Compile Include="Models\XMovieContext.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>

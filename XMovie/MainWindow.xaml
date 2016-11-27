@@ -8,14 +8,12 @@
         xmlns:metro="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
         xmlns:local="clr-namespace:XMovie"
         xmlns:common="clr-namespace:XMovie.Common"
-        xmlns:vm="clr-namespace:XMovie.ViewModel"
+        xmlns:controls="clr-namespace:XMovie.Controls"
+        xmlns:vm="clr-namespace:XMovie.ViewModels"
         mc:Ignorable="d"
         ResizeMode="CanResizeWithGrip"
         Name="XMovieWindow"
-        Title="XMovie" Height="350" Width="525" >
-    <metro:MetroWindow.DataContext>
-        <vm:MainWindowViewModel />
-    </metro:MetroWindow.DataContext>
+        Title="XMovie" Height="650" Width="825" >
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded">
             <ic:CallMethodAction TargetObject="{Binding}" MethodName="MainWindowLoaded" />
@@ -36,6 +34,19 @@
 
         <!-- 0.Menu -->
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10,5" Height="30">
+            <StackPanel.Resources>
+                <ResourceDictionary>
+                    <VisualBrush x:Key="ThumbnailCountImage" Visual="{StaticResource appbar_list}" />
+                </ResourceDictionary>
+            </StackPanel.Resources>
+            <metro:SplitButton>
+                <metro:SplitButton.DataContext>
+                    <vm:UserSettingsViewModel />
+                </metro:SplitButton.DataContext>
+                <metro:SplitButton.Icon>
+                    <Rectangle Width="15" Height="15" Margin="5" Fill="{StaticResource ThumbnailCountImage}" />
+                </metro:SplitButton.Icon>
+            </metro:SplitButton>
         </StackPanel>
         
         <!-- 1.Separator -->
@@ -65,10 +76,30 @@
                 </Grid.RowDefinitions>
                 
                 <!-- Movie ListBox -->
-                <ListBox x:Name="MovieListBox" Grid.Row="0" Grid.Column="0" AllowDrop="True">
+                <ListBox x:Name="MovieListBox" Grid.Row="0" Grid.Column="0" AllowDrop="True" ItemsSource="{Binding Path=Movies}"
+                         SelectionMode="Extended"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         VirtualizingPanel.IsVirtualizing="True"
+                         VirtualizingPanel.VirtualizationMode="Recycling"
+                         Padding="0"
+                         Margin="0"
+                         >
                     <ListBox.DataContext>
                         <vm:MovieListViewModel />
                     </ListBox.DataContext>
+                    <i:Interaction.Behaviors>
+                        <common:FileDropBehavior DropCommand="{Binding FileDropCommand}"/>
+                    </i:Interaction.Behaviors>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <controls:MovieItemControl />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal" Margin="0"/>
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
                 </ListBox>
 
                 <!-- Separator -->
@@ -76,7 +107,7 @@
 
                 <!-- Logs -->
                 <Grid Grid.Row="2" >
-                    <ListView x:Name="LogListView" ItemsSource="{Binding Path=LogRecords}">
+                    <ListView ItemsSource="{Binding Path=LogRecords}">
                         <ListView.DataContext>
                             <vm:LogListViewModel />
                         </ListView.DataContext>
@@ -114,8 +145,11 @@
                                     <DataTrigger Binding="{Binding Path=Level}" Value="{x:Static common:LogLevel.Error}">
                                         <Setter Property="Background" Value="Red" />
                                     </DataTrigger>
+                                    <DataTrigger Binding="{Binding Path=Level}" Value="{x:Static common:LogLevel.Warning}">
+                                        <Setter Property="Background" Value="#CA5100" />
+                                    </DataTrigger>
                                     <Trigger Property="IsSelected" Value="true">
-                                        <Setter Property="Foreground" Value="#dfdfdf" />
+                                        <Setter Property="Foreground" Value="#DFDFDF" />
                                         <Setter Property="Background" Value="#576573" />
                                     </Trigger>
                                     <Trigger Property="IsMouseOver" Value="true">

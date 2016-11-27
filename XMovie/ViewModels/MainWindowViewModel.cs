@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using XMovie.Common;
 
-namespace XMovie.ViewModel
+namespace XMovie.ViewModels
 {
-    public class MovieItemViewModel : ViewModelBase
+    public class MainWindowViewModel : ViewModelBase
     {
     }
 }

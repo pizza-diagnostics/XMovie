@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace XMovie.Model
+namespace XMovie.Models
 {
     public class TagMap
     {
@@ -18,6 +18,6 @@ namespace XMovie.Model
 
         [Required]
         [Index("IX_TagMovie", 2, IsUnique = true)]
-        public int MovieId { get; set; }
+        public string MovieId { get; set; }
     }
 }

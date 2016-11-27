@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace XMovie.ViewModel
+namespace XMovie.ViewModels
 {
     public class ViewModelBase : INotifyPropertyChanged, IDataErrorInfo
     {

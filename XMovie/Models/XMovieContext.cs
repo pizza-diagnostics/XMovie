@@ -1,4 +1,4 @@
-﻿namespace XMovie.Model
+﻿namespace XMovie.Models
 {
     using System;
     using System.Data.Entity;
@@ -28,6 +28,14 @@
         {
             var sqliteConnectionInitializer = new SqliteCreateDatabaseIfNotExists<XMovieContext>(modelBuilder);
             Database.SetInitializer(sqliteConnectionInitializer);
+
+            modelBuilder.Entity<Movie>()
+                        .HasMany<Thumbnail>(m => m.Thumbnails)
+                        .WithRequired(t => t.Movie)
+                        .HasForeignKey(t => t.MovieId);
+
+            base.OnModelCreating(modelBuilder);
+
         }
     }
 

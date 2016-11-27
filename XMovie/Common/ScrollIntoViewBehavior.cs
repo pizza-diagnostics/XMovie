@@ -11,26 +11,40 @@ namespace XMovie.Common
 {
     public class ScrollIntoViewBehavior : Behavior<ListView>
     {
+        private bool IsCleanedUp { get; set; } = false;
+
         protected override void OnAttached()
         {
-            var listView = AssociatedObject;
-            ((INotifyCollectionChanged)listView.Items).CollectionChanged += ScrollIntoViewBehavior_CollectionChanged;
             base.OnAttached();
+            ((INotifyCollectionChanged)AssociatedObject.Items).CollectionChanged += AssociatedObject_CollectionChanged;
+            AssociatedObject.Unloaded += AssociatedObject_Unloaded;
+        }
+
+        private void AssociatedObject_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (e.Action == NotifyCollectionChangedAction.Add)
+            {
+                AssociatedObject.ScrollIntoView(e.NewItems[0]);
+            }
+        }
+
+        private void AssociatedObject_Unloaded(object sender, System.Windows.RoutedEventArgs e)
+        {
+            CleanUp();
         }
 
         protected override void OnDetaching()
         {
-            var listView = AssociatedObject;
-            ((INotifyCollectionChanged)listView.Items).CollectionChanged -= ScrollIntoViewBehavior_CollectionChanged;
+            CleanUp();
             base.OnDetaching();
         }
 
-        private void ScrollIntoViewBehavior_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        private void CleanUp()
         {
-            var listView = AssociatedObject;
-            if (e.Action == NotifyCollectionChangedAction.Add)
+            if (!IsCleanedUp)
             {
-                listView.ScrollIntoView(e.NewItems[0]);
+                IsCleanedUp = true;
+                ((INotifyCollectionChanged)AssociatedObject.Items).CollectionChanged -= AssociatedObject_CollectionChanged;
             }
         }
     }
