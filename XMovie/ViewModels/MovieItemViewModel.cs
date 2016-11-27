@@ -11,6 +11,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using XMovie.Common;
 using XMovie.Models;
+using XMovie.Models.Settings;
 
 namespace XMovie.ViewModels
 {
@@ -18,7 +19,7 @@ namespace XMovie.ViewModels
     {
         public MovieItemViewModel()
         {
-            ThumbnailCount = 2;
+            ThumbnailCount = UserSettingManager.Instance.GetUserSettings().ThumbnailCount;
         }
 
         public MovieItemViewModel(string movieId) : this()
@@ -86,6 +87,7 @@ namespace XMovie.ViewModels
                     if (SetProperty(ref thumbnailCount, value, "thumbnailCount"))
                     {
                         OnPropertyChanged("ThumbnailImage");
+                        OnPropertyChanged("ThumbnailWidth");
                         OnPropertyChanged("MovieItemWidth");
                     }
                 }

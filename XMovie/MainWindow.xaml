@@ -12,13 +12,27 @@
         xmlns:vm="clr-namespace:XMovie.ViewModels"
         mc:Ignorable="d"
         ResizeMode="CanResizeWithGrip"
+        WindowState="{Binding Path=MainWindowState, Mode=TwoWay}"
+        Height="{Binding Path=MainWindowHeight, Mode=TwoWay}"
+        Width="{Binding Path=MainWindowWidth, Mode=TwoWay}"
+        Top="{Binding Path=MainWindowTop, Mode=TwoWay}"
+        Left="{Binding Path=MainWindowLeft, Mode=TwoWay}"
         Name="XMovieWindow"
-        Title="XMovie" Height="650" Width="825" >
+        Title="XMovie"
+       >
+
+    <metro:MetroWindow.DataContext>
+        <vm:MainWindowViewModel />
+    </metro:MetroWindow.DataContext>
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded">
             <ic:CallMethodAction TargetObject="{Binding}" MethodName="MainWindowLoaded" />
         </i:EventTrigger>
+        <i:EventTrigger EventName="Closing">
+            <i:InvokeCommandAction Command="{Binding WindowClosingCommand}" />
+        </i:EventTrigger>
     </i:Interaction.Triggers>
+
 
     <Grid>
         <Grid.RowDefinitions>
@@ -39,10 +53,7 @@
                     <VisualBrush x:Key="ThumbnailCountImage" Visual="{StaticResource appbar_list}" />
                 </ResourceDictionary>
             </StackPanel.Resources>
-            <metro:SplitButton>
-                <metro:SplitButton.DataContext>
-                    <vm:UserSettingsViewModel />
-                </metro:SplitButton.DataContext>
+            <metro:SplitButton ItemsSource="{Binding Path=ThumbnailCountList}" SelectedIndex="{Binding Path=ThumbnailCountListIndex}">
                 <metro:SplitButton.Icon>
                     <Rectangle Width="15" Height="15" Margin="5" Fill="{StaticResource ThumbnailCountImage}" />
                 </metro:SplitButton.Icon>

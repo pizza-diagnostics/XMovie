@@ -30,7 +30,8 @@
                         <Image Stretch="Uniform" Source="{Binding Path=ThumbnailImage}"
                                Height="{Binding Path=ThumbnailHeight}"
                                Width="{Binding Path=ThumbnailWidth}"
-                               HorizontalAlignment="Center"/>
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"/>
 
                         <Grid Background="#6C000000" Height="20" VerticalAlignment="Top">
                             <TextBlock TextTrimming="CharacterEllipsis"

@@ -9,18 +9,20 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using XMovie.Common;
 using XMovie.Models;
+using XMovie.Models.Settings;
 using static System.Diagnostics.Debug;
 
 namespace XMovie.ViewModels
 {
     public class MovieListViewModel : ViewModelBase
     {
-
         public ObservableCollection<MovieItemViewModel> Movies { get; private set; }
 
         private RelayCommand fileDropCommand;
 
         private Logger logger = Logger.Instace;
+
+        private UserSettings userSettings;
 
         public ICommand FileDropCommand
         {
@@ -38,14 +40,22 @@ namespace XMovie.ViewModels
         {
             using (var context = new XMovieContext())
             {
-                // FIXME: ViewModelの渡し方が違う？
+                // TODO: ViewModelの渡し方が違う？
                 Movies = new ObservableCollection<MovieItemViewModel>();
-                Print($"WTF {context.Movies.Count()}");
                 foreach (var movie in context.Movies)
                 {
                     Movies.Add(new MovieItemViewModel(movie.MovieId));
                 }
             }
+
+            userSettings = UserSettingManager.Instance.GetUserSettings();
+            userSettings.ThumbnailCountChanged += ((sender, count) =>
+            {
+                foreach (var movieModel in Movies)
+                {
+                    movieModel.ThumbnailCount = count;
+                }
+            });
         }
 
         private async void FileDropAction(object parameter)
@@ -86,7 +96,6 @@ namespace XMovie.ViewModels
                                 logger.Error(ex);
                             }
                         }
-                        Print($"Drop file: {file}");
                     }
                 }
             });

@@ -39,8 +39,8 @@ namespace XMovie.Models
         {
             using (var process = new Process())
             {
-                // TODO: パラメータは固定？
-                // FIXME: mp3/画像等の扱い -> エラーにならないので、[FORMAT]を全て出力してチェックする?
+                // TODO: ffprobeのパラメータは固定？
+                // TODO: mp3/画像等の扱い -> エラーにならないので、[FORMAT]を全て出力してチェックする?
                 var args = $"-v error -show_entries format=duration -of default=noprint_wrappers=1 \"{path}\"";
                 process.StartInfo = new ProcessStartInfo(Util.FFProbePath, args);
                 process.StartInfo.RedirectStandardOutput = true;
@@ -114,7 +114,7 @@ namespace XMovie.Models
                 logger.Debug($"{path} Duration: {duration}, md5sum: {movie.MD5Sum}");
 
                 // 1ファイルにつき5枚のサムネイルを作成する
-                var step = (int)duration / 6; // TODO: 
+                var step = (int)duration / 6; // TODO: サムネイル作成の時間間隔設定方法
                 for (var i = 0; i < 5; i++)
                 {
                     var seconds = 10 + (i * step);
@@ -127,7 +127,7 @@ namespace XMovie.Models
                     }
                     catch (Exception ex)
                     {
-                        // TODO: 
+                        // TODO: サムネイル作成エラーハンドリング
                     }
                     if (thumbnail == null)
                     {
@@ -152,7 +152,7 @@ namespace XMovie.Models
 
         public Thumbnail CreateMovieThumbnails(string moviePath, string thumbnailPath, int seconds)
         {
-            // FIXME: 動画以外の扱いをどうするか
+            // TODO: 動画以外の扱いをどうするか
             var arg = $"-ss {seconds} -i \"{moviePath}\" -vf scale=160:-1 -f image2 -an -y -vframes 1 \"{thumbnailPath}\"";
             var process = new Process();
             process.StartInfo = new ProcessStartInfo(Util.FFMpegPath);

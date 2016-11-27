@@ -23,6 +23,14 @@ namespace XMovie.Common
             }
         }
 
+        public static string UserSettingFilePath
+        {
+            get
+            {
+                return Path.Combine(ApplicationDirectory, "xmovie.json");
+            }
+        }
+
         public static string FFProbePath
         {
             get
