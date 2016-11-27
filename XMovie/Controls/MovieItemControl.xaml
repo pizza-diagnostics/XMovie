@@ -19,30 +19,24 @@
                 <RowDefinition />
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-            <Button Grid.Row="0">
-                <i:Interaction.Triggers>
-                    <i:EventTrigger EventName="MouseDoubleClick">
-                        <i:InvokeCommandAction Command="{Binding Path=PlayMovieCommand}" />
-                    </i:EventTrigger>
-                </i:Interaction.Triggers>
-                <Button.Content>
-                    <Grid>
-                        <Image Stretch="Uniform" Source="{Binding Path=ThumbnailImage}"
-                               Height="{Binding Path=ThumbnailHeight}"
-                               Width="{Binding Path=ThumbnailWidth}"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center"/>
+            <Grid.InputBindings>
+                <MouseBinding MouseAction="LeftDoubleClick" Command="{Binding PlayMovieCommand}" />
+            </Grid.InputBindings>
+            <Grid>
+                <Image Stretch="Uniform" Source="{Binding Path=ThumbnailImage}"
+                       Height="{Binding Path=ThumbnailHeight}"
+                       Width="{Binding Path=ThumbnailWidth}"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"/>
 
-                        <Grid Background="#6C000000" Height="20" VerticalAlignment="Top">
-                            <TextBlock TextTrimming="CharacterEllipsis"
-                                       VerticalAlignment="Center"
-                                       HorizontalAlignment="Stretch"
-                                       Margin="5,0" 
-                                       Text="{Binding Path=FileName}"/>
-                        </Grid>
-                    </Grid>
-                </Button.Content>
-            </Button>
+                <Grid Background="#6C000000" Height="20" VerticalAlignment="Top">
+                    <TextBlock TextTrimming="CharacterEllipsis"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Stretch"
+                               Margin="5,0" 
+                               Text="{Binding Path=FileName}"/>
+                </Grid>
+            </Grid>
 
             <Grid Grid.Row="1">
                 <Grid.ColumnDefinitions>

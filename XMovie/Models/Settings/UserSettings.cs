@@ -31,6 +31,8 @@ namespace XMovie.Models.Settings
         public int MainWindowLeft { get; set; } = 100;
         public WindowState MainWindowState { get; set; } = WindowState.Normal;
 
+        public bool IsFileSearch { get; set; } = false;
+
         public UserSettings()
         {
             thumbnailCount = 3;

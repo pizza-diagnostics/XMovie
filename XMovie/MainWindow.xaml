@@ -65,6 +65,21 @@
 
         <!-- 2.Search Menu -->
         <Grid Grid.Row="2">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Margin="10,10,0,10" VerticalAlignment="Center">Search:</TextBlock>
+                <ComboBox Margin="10" Width="400" IsEditable="True" 
+                          metro:TextBoxHelper.Watermark="Search" x:Name="SearchComboBox">
+                    <ComboBox.InputBindings>
+                        <KeyBinding Command="{Binding SearchCommand}"
+                                    Key="Return"
+                                    CommandParameter="{Binding ElementName=SearchComboBox,Path=Text}" />
+                    </ComboBox.InputBindings>
+                </ComboBox>
+                <metro:ToggleSwitch VerticalAlignment="Center" OnLabel="File search" OffLabel="Tag search"
+                                    Width="130"
+                                    FontStyle="Normal" FontSize="12" FontFamily="Yu Gothic UI"
+                                    IsChecked="{Binding Path=IsFileSearch}"/>
+            </StackPanel>
         </Grid>
 
         <!-- 3.Separator -->
@@ -87,7 +102,7 @@
                 </Grid.RowDefinitions>
                 
                 <!-- Movie ListBox -->
-                <ListBox x:Name="MovieListBox" Grid.Row="0" Grid.Column="0" AllowDrop="True" ItemsSource="{Binding Path=Movies}"
+                <ListBox Grid.Row="0" Grid.Column="0" AllowDrop="True" ItemsSource="{Binding Path=Movies}"
                          SelectionMode="Extended"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                          VirtualizingPanel.IsVirtualizing="True"
@@ -95,9 +110,7 @@
                          Padding="0"
                          Margin="0"
                          >
-                    <ListBox.DataContext>
-                        <vm:MovieListViewModel />
-                    </ListBox.DataContext>
+
                     <i:Interaction.Behaviors>
                         <common:FileDropBehavior DropCommand="{Binding FileDropCommand}"/>
                     </i:Interaction.Behaviors>

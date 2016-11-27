@@ -182,6 +182,7 @@
     <Compile Include="Common\RelayCommand.cs" />
     <Compile Include="Common\ScrollIntoViewBehavior.cs" />
     <Compile Include="Common\Util.cs" />
+    <Compile Include="Models\DisplayMovieCollection.cs" />
     <Compile Include="Models\MovieImporter.cs" />
     <Compile Include="Models\MovieImporterException.cs" />
     <Compile Include="Models\Settings\UserSettingManager.cs" />
@@ -189,7 +190,6 @@
     <Compile Include="ViewModels\LogListViewModel.cs" />
     <Compile Include="ViewModels\MainWindowViewModel.cs" />
     <Compile Include="ViewModels\MovieItemViewModel.cs" />
-    <Compile Include="ViewModels\MovieListViewModel.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
     <Page Include="Controls\MovieItemControl.xaml">
       <SubType>Designer</SubType>
