@@ -19,6 +19,10 @@ namespace XMovie.ViewModels
 
         public ObservableCollection<MovieItemViewModel> Movies { get; private set; }
 
+        public MovieInformationViewModel MovieInformation { get; private set; } = new MovieInformationViewModel();
+
+        public LogListViewModel Logs { get; private set; } = new LogListViewModel();
+
         public MainWindowViewModel()
         {
             using (var context = new XMovieContext())

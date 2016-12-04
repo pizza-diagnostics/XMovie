@@ -43,10 +43,8 @@
                     <ColumnDefinition />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel Orientation="Vertical">
-                    </StackPanel>
-                </ScrollViewer>
+                <WrapPanel>
+                </WrapPanel>
                 <StackPanel Grid.Column="1" Orientation="Vertical">
                     <StackPanel Orientation="Horizontal"
                                 HorizontalAlignment="Right"

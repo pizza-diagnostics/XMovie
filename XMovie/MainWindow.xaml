@@ -121,6 +121,7 @@
 
                     <i:Interaction.Behaviors>
                         <common:FileDropBehavior DropCommand="{Binding FileDropCommand}"/>
+                        <common:ListBoxSelectedItemsBehavior SelectedItems="{Binding MovieInformation.SelectedMovies,Mode=OneWayToSource}" />
                     </i:Interaction.Behaviors>
                     <ListBox.ItemTemplate>
                         <DataTemplate>
@@ -139,13 +140,10 @@
 
                 <!-- Logs -->
                 <Grid Grid.Row="2" >
-                    <ListView ItemsSource="{Binding Path=LogRecords}">
-                        <ListView.DataContext>
-                            <vm:LogListViewModel />
-                        </ListView.DataContext>
+                    <ListView ItemsSource="{Binding Path=Logs.LogRecords}">
                         <i:Interaction.Triggers>
                             <i:EventTrigger EventName="Loaded">
-                                <ic:CallMethodAction TargetObject="{Binding}" MethodName="LogViewLoaded" />
+                                <ic:CallMethodAction TargetObject="{Binding Logs}" MethodName="LogViewLoaded" />
                             </i:EventTrigger>
                         </i:Interaction.Triggers>
                         <i:Interaction.Behaviors>
@@ -220,6 +218,7 @@
 
             <!-- Tags -->
             <Grid Grid.Column="2" Grid.RowSpan="2">
+                <controls:MovieInformationControl DataContext="{Binding MovieInformation}"/>
             </Grid>
         </Grid>
 

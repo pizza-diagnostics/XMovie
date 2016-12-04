@@ -16,7 +16,7 @@ namespace XMovie.Models.Settings
 
         private UserSettings userSettings;
 
-        private Logger logger;
+        private Logger logger = Logger.Instace;
 
         private UserSettingManager()
         {

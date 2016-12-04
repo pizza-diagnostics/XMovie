@@ -1,0 +1,57 @@
+﻿<UserControl x:Class="XMovie.Controls.MovieInformationControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:metro="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+             xmlns:local="clr-namespace:XMovie.Controls"
+             xmlns:vm="clr-namespace:XMovie.ViewModels"
+             mc:Ignorable="d" 
+             d:DesignHeight="300" d:DesignWidth="300">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <ScrollViewer VerticalScrollBarVisibility="Visible">
+            <ItemsControl ItemsSource="{Binding Tags}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <local:TagControl />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBox x:Name="NewCategoryTextBox"
+                     metro:TextBoxHelper.Watermark="新しいカテゴリ"
+                     Margin="5"
+                     Text="{Binding NewCategoryName, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}">
+                <TextBox.InputBindings>
+                    <KeyBinding Command="{Binding AddNewCategoryCommand}"
+                                    Key="Return"
+                                    CommandParameter="{Binding ElementName=NewCategoryTextBox,Path=Text}" />
+                </TextBox.InputBindings>
+            </TextBox>
+            <Button Grid.Column="1" Margin="5,5,20,5" IsEnabled="{Binding EnableAddCategory}"
+                    Command="{Binding AddNewCategoryCommand}"
+                    CommandParameter="{Binding ElementName=NewCategoryTextBox,Path=Text}"
+                    Width="30"
+                    Height="30"
+                    Padding="0">
+                <Rectangle Width="20" Height="20">
+                    <Rectangle.Fill>
+                        <VisualBrush Stretch="Fill" Visual="{StaticResource appbar_arrow_up}" />
+                    </Rectangle.Fill>
+                </Rectangle>
+            </Button>
+        </Grid>
+    </Grid>
+</UserControl>

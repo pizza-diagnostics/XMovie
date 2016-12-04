@@ -24,17 +24,17 @@ namespace XMovie.ViewModels
 
         public MovieItemViewModel(string movieId) : this()
         {
-            this.movieId = movieId;
+            MovieId = movieId;
             using (var context = new XMovieContext())
             {
-                var movie = context.Movies.Find(movieId);
+                var movie = context.Movies.Find(MovieId);
                 Rank = movie.Rank;
                 PlayCount = movie.PlayCount;
                 Path = movie.Path;
             }
         }
 
-        private string movieId;
+        public string MovieId { get; private set; }
         private Logger logger = Logger.Instace;
 
         private int rank;
@@ -128,7 +128,7 @@ namespace XMovie.ViewModels
             {
                 using (var context = new XMovieContext())
                 {
-                    var thumbnails = context.Thumbnails.Where(t => t.MovieId.Equals(movieId)).ToArray();
+                    var thumbnails = context.Thumbnails.Where(t => t.MovieId.Equals(MovieId)).ToArray();
                     if (thumbnails == null || thumbnails.Count() == 0)
                        return null;
                     var visual = new DrawingVisual();
@@ -168,7 +168,7 @@ namespace XMovie.ViewModels
                     {
                         using (var context = new XMovieContext())
                         {
-                            var movie = context.Movies.Find(movieId);
+                            var movie = context.Movies.Find(MovieId);
                             movie.Rank += (int)param;
                             Rank = movie.Rank;
                             context.SaveChanges();
@@ -195,7 +195,7 @@ namespace XMovie.ViewModels
                             System.Diagnostics.Process.Start(Path);
                             using (var context = new XMovieContext())
                             {
-                                var movie = context.Movies.Find(movieId);
+                                var movie = context.Movies.Find(MovieId);
                                 PlayCount = ++movie.PlayCount;
                                 context.SaveChanges();
                             }

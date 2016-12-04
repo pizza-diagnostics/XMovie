@@ -19,5 +19,10 @@ namespace XMovie.Models
         [Required]
         [Index("IX_TagName", 2, IsUnique = true)]
         public string Name { get; set; }
+
+        public override string ToString()
+        {
+            return Name;
+        }
     }
 }
