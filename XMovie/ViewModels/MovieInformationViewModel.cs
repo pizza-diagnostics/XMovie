@@ -92,6 +92,7 @@ namespace XMovie.ViewModels
                             }
                             NewCategoryName = "";
                         }
+                        SelectedMovies = selectedMovies; // TODO: どうにかして新しいTagControlに選択状態を伝えたい。。
                     });
                 }
                 return addNewCategoryCommand;
