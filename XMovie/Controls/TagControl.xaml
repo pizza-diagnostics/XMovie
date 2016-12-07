@@ -5,8 +5,14 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:metro="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
              xmlns:local="clr-namespace:XMovie.Controls"
+             xmlns:common="clr-namespace:XMovie.Common"
              mc:Ignorable="d" 
-             d:DesignHeight="300" d:DesignWidth="300">
+             d:DesignHeight="300" d:DesignWidth="300"
+             x:Name="TagUserControl">
+    <UserControl.Resources>
+        <common:TagCommandParameterConverter x:Key="TagConverter" />
+    </UserControl.Resources>
+
     <Border BorderThickness="1" BorderBrush="Gray" CornerRadius="8" Padding="2" Margin="2">
         <Grid Margin="5">
             <Grid.RowDefinitions>
@@ -37,9 +43,16 @@
                       Margin="0,5" IsEditable="True" IsEnabled="{Binding EnableTagEdit}"
                       metro:TextBoxHelper.ClearTextButton="True" Text="{Binding AddTagText}">
                 <ComboBox.InputBindings>
-                    <KeyBinding Command="{Binding AddTagCommand}"
-                                Key="Return"
-                                CommandParameter="{Binding ElementName=AddTagComboBox,Path=Text}" />
+                    <KeyBinding Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type metro:MetroWindow}},Path=DataContext.AddTagCommand}"
+                                Key="Return">
+                        <KeyBinding.CommandParameter>
+                            <MultiBinding Converter="{StaticResource TagConverter}">
+                                <Binding Path="Text" ElementName="AddTagComboBox"/>
+                                <Binding Path="DataContext.TagCategoryId" ElementName="TagUserControl"/>
+                            </MultiBinding>
+                        </KeyBinding.CommandParameter>
+                    </KeyBinding>
+
                 </ComboBox.InputBindings>
             </ComboBox>
 
@@ -58,11 +71,14 @@
                                     <VisualBrush Stretch="Fill" Visual="{StaticResource appbar_tag}" />
                                 </Rectangle.Fill>
                             </Rectangle>
-                            <TextBlock Grid.Column="1" Text="{Binding}" />
+                            <TextBlock Grid.Column="1" Text="{Binding Path=Name}" />
                             <Button Grid.Column="2" HorizontalAlignment="Right" Width="20" Height="20"
                                     MinHeight="20"
                                     Padding="0"
-                                    BorderThickness="1">
+                                    BorderThickness="1"
+                                    Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type metro:MetroWindow}},Path=DataContext.RemoveTagCommand}"
+                                    CommandParameter="{Binding .}"
+                                    >
                                 <Rectangle Width="10" Height="10" >
                                     <Rectangle.Fill>
                                         <VisualBrush Stretch="Fill" Visual="{StaticResource appbar_close}" />

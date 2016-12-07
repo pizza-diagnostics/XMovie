@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
@@ -35,16 +33,39 @@ namespace XMovie.ViewModels
             // 選択されている動画に設定されているタグをTagsに設定
             using (var context = new XMovieContext())
             {
-                var selectedMovieIdList = selectedMovies?.Select(m => ((MovieItemViewModel)m).MovieId);
+                var selectedMovieIdList = selectedMovies?.Select(m => $"'{((MovieItemViewModel)m).MovieId}'");
                 if (selectedMovieIdList == null)
                 {
                     Tags = new ObservableCollection<Tag>();
                 }
                 else
                 {
-                    var tagIdList = context.TagMaps.Where(tm => selectedMovieIdList.Contains(tm.MovieId)).Select(tm => tm.TagId).ToList();
-                    var list = context.Tags.Where(t => t.TagCategoryId == TagCategoryId && tagIdList.Contains(t.TagId)).ToList();
-                    Tags = new ObservableCollection<Tag>(list);
+                    /*
+                    var tags = from tm in context.TagMaps
+                               join t in context.Tags
+                               on tm.TagId equals t.TagId
+                               where selectedMovieIdList.Contains(tm.MovieId) && t.TagCategoryId == TagCategoryId
+                               select new Tag() { Name = t.Name, TagId = t.TagId, TagCategoryId = t.TagCategoryId };
+                    Tags = new ObservableCollection<Tag>(tags.ToList());
+                    */
+                    var query = $@"
+select
+    T.*
+from
+    Tags T, TagMaps TM
+where
+    T.TagId = TM.TagId and
+    T.TagCategoryId = {TagCategoryId} and
+    TM.MovieId in ({String.Join(",", selectedMovieIdList)})
+group by
+    T.TagId
+";
+                    var results = context.Database.SqlQuery<Tag>(query);
+                    Tags = new ObservableCollection<Tag>(results);
+                    foreach (var result in results)
+                    {
+                        System.Diagnostics.Debug.Print($"{result.Name}");
+                    }
                 }
             }
         }
@@ -58,6 +79,7 @@ namespace XMovie.ViewModels
                 SetProperty(ref tags, value, "Tags");
             }
         }
+
 
         private bool enableTagEdit = false;
         public bool EnableTagEdit
@@ -82,28 +104,9 @@ namespace XMovie.ViewModels
                 {
                     addTagCommand = new RelayCommand((param) =>
                     {
-                        string newTag = (string)param;
+                        var tag = (Tag)param;
                         using (var context = new XMovieContext())
                         {
-                            // 1. 新規タグをマスタに追加
-                            bool isExist = context.Tags.Any(t => t.Name.Equals(newTag) && t.TagCategoryId == TagCategoryId);
-                            Tag tag;
-                            if (!isExist)
-                            {
-                                tag = new Tag()
-                                {
-                                    TagCategoryId = TagCategoryId,
-                                    Name = newTag
-                                };
-                                context.Tags.Add(tag);
-                                context.SaveChanges();
-                            }
-                            else
-                            {
-                                tag = context.Tags.Where(t => t.TagCategoryId == TagCategoryId && t.Name.Equals(newTag))
-                                                  .Select(t => t)
-                                                  .FirstOrDefault();
-                            }
                             // 2. 同じタグが設定されていない動画にタグを追加
 
                             // TagMapから既に同タグが設定されている動画を抽出
@@ -133,6 +136,30 @@ namespace XMovie.ViewModels
                     });
                 }
                 return addTagCommand;
+            }
+        }
+
+        private ICommand removeTagCommand;
+        public ICommand RemoveTagCommand
+        {
+            get
+            {
+                if (removeTagCommand == null)
+                {
+                    removeTagCommand = new RelayCommand((param) =>
+                    {
+                        var tagId = ((Tag)param).TagId;
+                        using (var context = new XMovieContext())
+                        {
+                            var movieIdList = selectedMovies.Select(m => ((MovieItemViewModel)m).MovieId);
+                            var removes = context.TagMaps.Where(tm => movieIdList.Contains(tm.MovieId) && tm.TagId == tagId).Select(tm => tm);
+                            context.TagMaps.RemoveRange(removes);
+                            context.SaveChanges();
+                        }
+                        UpdateSelectedMovieTags();
+                    });
+                }
+                return removeTagCommand;
             }
         }
         #endregion

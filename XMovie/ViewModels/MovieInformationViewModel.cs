@@ -109,6 +109,56 @@ namespace XMovie.ViewModels
             set { tags = value; }
         }
 
+        public ObservableCollection<TagViewModel> DistinctTags { get; set; }
+
+        private ICommand addTagCommand;
+        public ICommand AddTagCommand
+        {
+            get
+            {
+                if (addTagCommand == null)
+                {
+                    addTagCommand = new RelayCommand((param) =>
+                    {
+                        var tagParam = (Tag)param;
+                        foreach (TagViewModel tag in Tags)
+                        {
+                            if (tag.TagCategoryId == tagParam.TagCategoryId)
+                            {
+                                if (tag.AddTagCommand.CanExecute(param))
+                                {
+                                    tag.AddTagCommand.Execute(param);
+                                }
+                            }
+                        }
+                    });
+                }
+                return addTagCommand;
+            }
+        }
+
+        private ICommand removeTagCommand;
+        public ICommand RemoveTagCommand
+        {
+            get
+            {
+                if (removeTagCommand == null)
+                {
+                    removeTagCommand = new RelayCommand((param) =>
+                    {
+                        foreach (TagViewModel tag in Tags)
+                        {
+                            if (tag.RemoveTagCommand.CanExecute(param))
+                            {
+                                tag.RemoveTagCommand.Execute(param);
+                            }
+                        }
+                    });
+                }
+                return removeTagCommand;
+            }
+        } 
+
         #endregion
     }
 }

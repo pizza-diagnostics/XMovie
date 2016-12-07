@@ -17,6 +17,8 @@ namespace XMovie.ViewModels
 {
     public class MovieItemViewModel : ViewModelBase
     {
+        private Logger logger = Logger.Instace;
+
         public MovieItemViewModel()
         {
             ThumbnailCount = UserSettingManager.Instance.GetUserSettings().ThumbnailCount;
@@ -31,11 +33,25 @@ namespace XMovie.ViewModels
                 Rank = movie.Rank;
                 PlayCount = movie.PlayCount;
                 Path = movie.Path;
+
+                var tags = from tm in context.TagMaps
+                           join t in context.Tags
+                           on tm.TagId equals t.TagId
+                           where tm.MovieId == movie.MovieId
+                           select new TagMapViewModel(){ TagId = tm.TagId, TagMapId = tm.TagMapId, Name = t.Name };
+
+                TagMaps = new ObservableCollection<TagMapViewModel>(tags);
             }
         }
 
         public string MovieId { get; private set; }
-        private Logger logger = Logger.Instace;
+
+        private ObservableCollection<TagMapViewModel> tagMaps;
+        public ObservableCollection<TagMapViewModel> TagMaps
+        {
+            get { return this.tagMaps; }
+            set { SetProperty(ref tagMaps, value, "TagMaps"); }
+        }
 
         private int rank;
         public int Rank
@@ -207,6 +223,54 @@ namespace XMovie.ViewModels
                     });
                 }
                 return playMovieCommand;
+            }
+        }
+
+        private ICommand addTagCommand;
+        public ICommand AddTagCommand
+        {
+            get
+            {
+                if (addTagCommand == null)
+                {
+                    addTagCommand = new RelayCommand((param) =>
+                    {
+                        var tagParam = (Tag)param;
+                        var isExist = TagMaps.Where(tm => tm.TagId == tagParam.TagId).Count() > 0;
+                        if (!isExist)
+                        {
+                            // TODO: 冗長
+                            using (var context = new XMovieContext())
+                            {
+                                var tags = from tm in context.TagMaps
+                                           join t in context.Tags
+                                           on tm.TagId equals t.TagId
+                                           where tm.MovieId == MovieId
+                                           select new TagMapViewModel(){ TagId = tm.TagId, TagMapId = tm.TagMapId, Name = t.Name };
+
+                                TagMaps = new ObservableCollection<TagMapViewModel>(tags);
+                            }
+                        }
+                    });
+                }
+                return addTagCommand;
+            }
+        }
+
+        private ICommand removeTagCommand;
+        public ICommand RemoveTagCommand
+        {
+            get
+            {
+                if (removeTagCommand == null)
+                {
+                    removeTagCommand = new RelayCommand((param) =>
+                    {
+                        var remove = TagMaps.Where(tm => tm.TagId == ((Tag)param).TagId).FirstOrDefault();
+                        TagMaps.Remove(remove);
+                    });
+                }
+                return removeTagCommand;
             }
         }
         #endregion

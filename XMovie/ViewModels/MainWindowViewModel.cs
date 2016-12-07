@@ -222,6 +222,61 @@ namespace XMovie.ViewModels
                 return searchCommand;
             }
         }
+
+        private ICommand addTagCommand;
+        public ICommand AddTagCommand
+        {
+            get
+            {
+                if (addTagCommand == null)
+                {
+                    addTagCommand = new RelayCommand((param) =>
+                    {
+                        var tagParameter = (TagCommandParameter)param;
+                        var tag = InsertNewTag(tagParameter);
+
+                        if (MovieInformation.AddTagCommand.CanExecute(tag))
+                        {
+                            MovieInformation.AddTagCommand.Execute(tag);
+                        }
+                        foreach (MovieItemViewModel movie in MovieInformation.SelectedMovies)
+                        {
+                            if (movie.AddTagCommand.CanExecute(tag))
+                            {
+                                movie.AddTagCommand.Execute(tag);
+                            }
+                        }
+                    });
+                }
+                return addTagCommand;
+            }
+        }
+
+        private ICommand removeTagCommand;
+        public ICommand RemoveTagCommand
+        {
+            get
+            {
+                if (removeTagCommand == null)
+                {
+                    removeTagCommand = new RelayCommand((param) =>
+                    {
+                        if (MovieInformation.RemoveTagCommand.CanExecute(param))
+                        {
+                            MovieInformation.RemoveTagCommand.Execute(param);
+                        }
+                        foreach (MovieItemViewModel movie in MovieInformation.SelectedMovies)
+                        {
+                            if (movie.RemoveTagCommand.CanExecute(param))
+                            {
+                                movie.RemoveTagCommand.Execute(param);
+                            }
+                        }
+                    });
+                }
+                return removeTagCommand;
+            }
+        }
         #endregion
 
         private void AddSearchHistory(string keywords)
@@ -272,6 +327,33 @@ namespace XMovie.ViewModels
                 {
                     Movies.Add(new MovieItemViewModel(movie.MovieId));
                 }
+            }
+        }
+
+        private Tag InsertNewTag(TagCommandParameter tagParameter)
+        {
+            using (var context = new XMovieContext())
+            {
+                // 1. 新規タグをマスタに追加
+                bool isExist = context.Tags.Any(t => t.Name.Equals(tagParameter.Name) && t.TagCategoryId == tagParameter.TagCategoryId);
+                Tag tag;
+                if (!isExist)
+                {
+                    tag = new Tag()
+                    {
+                        TagCategoryId = tagParameter.TagCategoryId,
+                        Name = tagParameter.Name
+                    };
+                    context.Tags.Add(tag);
+                    context.SaveChanges();
+                }
+                else
+                {
+                    tag = context.Tags.Where(t => t.TagCategoryId == tagParameter.TagCategoryId && t.Name.Equals(tagParameter.Name))
+                                      .Select(t => t)
+                                      .FirstOrDefault();
+                }
+                return tag;
             }
         }
     }

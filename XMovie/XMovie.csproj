@@ -184,6 +184,7 @@
     <Compile Include="Common\ListBoxSelectedItemsBehavior.cs" />
     <Compile Include="Common\RelayCommand.cs" />
     <Compile Include="Common\ScrollIntoViewBehavior.cs" />
+    <Compile Include="Common\TagCommandParameterConverter.cs" />
     <Compile Include="Common\Util.cs" />
     <Compile Include="Controls\MovieInformationControl.xaml.cs">
       <DependentUpon>MovieInformationControl.xaml</DependentUpon>
@@ -196,11 +197,13 @@
     <Compile Include="Models\MovieImporterException.cs" />
     <Compile Include="Models\Settings\UserSettingManager.cs" />
     <Compile Include="Models\Settings\UserSettings.cs" />
+    <Compile Include="Models\TagCommandParameter.cs" />
     <Compile Include="ViewModels\LogListViewModel.cs" />
     <Compile Include="ViewModels\MainWindowViewModel.cs" />
     <Compile Include="ViewModels\MovieInformationViewModel.cs" />
     <Compile Include="ViewModels\MovieItemViewModel.cs" />
     <Compile Include="ViewModels\TagViewModel.cs" />
+    <Compile Include="ViewModels\TagMapViewModel.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
     <Page Include="Controls\MovieInformationControl.xaml">
       <SubType>Designer</SubType>

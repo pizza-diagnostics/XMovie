@@ -43,8 +43,22 @@
                     <ColumnDefinition />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <WrapPanel>
-                </WrapPanel>
+                <ItemsControl ItemsSource="{Binding TagMaps}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Margin="4" Padding="0" BorderThickness="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                                    Content="{Binding}"
+
+                                    />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal" Margin="0"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
                 <StackPanel Grid.Column="1" Orientation="Vertical">
                     <StackPanel Orientation="Horizontal"
                                 HorizontalAlignment="Right"
