@@ -1,8 +1,10 @@
 # XMovie
 
-## ����͉��H
+## これは何？
 
-����̃^�O�Ǘ����B�ꖪ�ɂ����AC#/WPF�̊w�K���ʃA�E�g�v�b�g�ł��B
+動画のタグ管理を隠れ蓑にした、C#/WPF/EntityFramework/sqlの学習結果アウトプットです。
 
+## 依存
 
+ffmpeg/ffproveを使用しています。アプリケーション実行ファイルと同じディレクトリにexeファイルが必要です。
 
