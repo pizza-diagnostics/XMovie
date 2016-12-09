@@ -30,7 +30,10 @@
                 <Button Grid.Column="1" Width="20" Height="20" MinHeight="20"
                         BorderThickness="1"
                         Margin="5,0,5,0"
-                        Padding="0">
+                        Padding="0"
+                        Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type metro:MetroWindow}},Path=DataContext.RemoveCategoryCommand}"
+                        CommandParameter="{Binding}"
+                        >
                     <Rectangle Width="12" Height="12">
                         <Rectangle.Fill>
                             <VisualBrush Stretch="Fill" Visual="{StaticResource appbar_delete}" />
@@ -42,6 +45,7 @@
             <ComboBox Grid.Row="1" x:Name="AddTagComboBox"
                       Margin="0,5" IsEditable="True" IsEnabled="{Binding EnableTagEdit}"
                       metro:TextBoxHelper.ClearTextButton="True" Text="{Binding AddTagText}">
+
                 <ComboBox.InputBindings>
                     <KeyBinding Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type metro:MetroWindow}},Path=DataContext.AddTagCommand}"
                                 Key="Return">

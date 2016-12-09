@@ -33,15 +33,8 @@ namespace XMovie.ViewModels
                 Rank = movie.Rank;
                 PlayCount = movie.PlayCount;
                 Path = movie.Path;
-
-                var tags = from tm in context.TagMaps
-                           join t in context.Tags
-                           on tm.TagId equals t.TagId
-                           where tm.MovieId == movie.MovieId
-                           select new TagMapViewModel(){ TagId = tm.TagId, TagMapId = tm.TagMapId, Name = t.Name };
-
-                TagMaps = new ObservableCollection<TagMapViewModel>(tags);
             }
+            UpdateTags();
         }
 
         public string MovieId { get; private set; }
@@ -172,6 +165,20 @@ namespace XMovie.ViewModels
             }
         }
 
+        public void UpdateTags()
+        {
+            using (var context = new XMovieContext())
+            {
+                var tags = from tm in context.TagMaps
+                           join t in context.Tags
+                           on tm.TagId equals t.TagId
+                           where tm.MovieId == MovieId
+                           select new TagMapViewModel(){ TagId = tm.TagId, TagMapId = tm.TagMapId, Name = t.Name };
+
+                TagMaps = new ObservableCollection<TagMapViewModel>(tags);
+            }
+        }
+
         #region Command
         private RelayCommand changeRankCommand;
         public ICommand ChangeRankCommand
@@ -240,16 +247,7 @@ namespace XMovie.ViewModels
                         if (!isExist)
                         {
                             // TODO: 冗長
-                            using (var context = new XMovieContext())
-                            {
-                                var tags = from tm in context.TagMaps
-                                           join t in context.Tags
-                                           on tm.TagId equals t.TagId
-                                           where tm.MovieId == MovieId
-                                           select new TagMapViewModel(){ TagId = tm.TagId, TagMapId = tm.TagMapId, Name = t.Name };
-
-                                TagMaps = new ObservableCollection<TagMapViewModel>(tags);
-                            }
+                            UpdateTags();
                         }
                     });
                 }

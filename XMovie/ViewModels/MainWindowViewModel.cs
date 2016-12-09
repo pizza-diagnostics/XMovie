@@ -9,6 +9,7 @@ using System.Windows.Input;
 using XMovie.Common;
 using XMovie.Models;
 using XMovie.Models.Settings;
+using XMovie.Service;
 
 namespace XMovie.ViewModels
 {
@@ -19,12 +20,17 @@ namespace XMovie.ViewModels
 
         public ObservableCollection<MovieItemViewModel> Movies { get; private set; }
 
-        public MovieInformationViewModel MovieInformation { get; private set; } = new MovieInformationViewModel();
+        public MovieInformationViewModel MovieInformation { get; private set; }
 
         public LogListViewModel Logs { get; private set; } = new LogListViewModel();
 
-        public MainWindowViewModel()
+        private IDialogService dialogService; 
+
+        public MainWindowViewModel(IDialogService dialogService)
         {
+            this.dialogService = dialogService;
+            MovieInformation = new MovieInformationViewModel(dialogService);
+
             using (var context = new XMovieContext())
             {
                 // TODO: ViewModelの渡し方が違う？
@@ -235,16 +241,10 @@ namespace XMovie.ViewModels
                         var tagParameter = (TagCommandParameter)param;
                         var tag = InsertNewTag(tagParameter);
 
-                        if (MovieInformation.AddTagCommand.CanExecute(tag))
-                        {
-                            MovieInformation.AddTagCommand.Execute(tag);
-                        }
+                        MovieInformation.AddTagCommand.Execute(tag);
                         foreach (MovieItemViewModel movie in MovieInformation.SelectedMovies)
                         {
-                            if (movie.AddTagCommand.CanExecute(tag))
-                            {
-                                movie.AddTagCommand.Execute(tag);
-                            }
+                            movie.AddTagCommand.Execute(tag);
                         }
                     });
                 }
@@ -261,20 +261,39 @@ namespace XMovie.ViewModels
                 {
                     removeTagCommand = new RelayCommand((param) =>
                     {
-                        if (MovieInformation.RemoveTagCommand.CanExecute(param))
-                        {
-                            MovieInformation.RemoveTagCommand.Execute(param);
-                        }
+                        MovieInformation.RemoveTagCommand.Execute(param);
                         foreach (MovieItemViewModel movie in MovieInformation.SelectedMovies)
                         {
-                            if (movie.RemoveTagCommand.CanExecute(param))
-                            {
-                                movie.RemoveTagCommand.Execute(param);
-                            }
+                            movie.RemoveTagCommand.Execute(param);
                         }
                     });
                 }
                 return removeTagCommand;
+            }
+        }
+
+        private ICommand removeCategoryCommand;
+        public ICommand RemoveCategoryCommand
+        {
+            get
+            {
+                if (removeCategoryCommand == null)
+                {
+                    removeCategoryCommand = new RelayCommand(async (param) =>
+                    {
+                        var result = await dialogService.ShowConfirmDialog("カテゴリの削除",
+                            "カテゴリを削除しますか?\n(全ての動画からカテゴリに属するすべてのタグが削除されます。)");
+                        if (result)
+                        {
+                            MovieInformation.RemoveCategoryCommand.Execute(param);
+                            foreach (MovieItemViewModel movie in MovieInformation.SelectedMovies)
+                            {
+                                movie.UpdateTags();
+                            }
+                        }
+                    });
+                }
+                return removeCategoryCommand;
             }
         }
         #endregion

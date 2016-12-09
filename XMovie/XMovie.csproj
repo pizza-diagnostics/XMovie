@@ -198,6 +198,8 @@
     <Compile Include="Models\Settings\UserSettingManager.cs" />
     <Compile Include="Models\Settings\UserSettings.cs" />
     <Compile Include="Models\TagCommandParameter.cs" />
+    <Compile Include="Service\IDialogService.cs" />
+    <Compile Include="Service\MetroDialogService.cs" />
     <Compile Include="ViewModels\LogListViewModel.cs" />
     <Compile Include="ViewModels\MainWindowViewModel.cs" />
     <Compile Include="ViewModels\MovieInformationViewModel.cs" />

@@ -8,19 +8,24 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using XMovie.Common;
 using XMovie.Models;
+using XMovie.Service;
 
 namespace XMovie.ViewModels
 {
     public class MovieInformationViewModel : ViewModelBase
     {
-        public MovieInformationViewModel()
+        private IDialogService dialogService;
+
+        public MovieInformationViewModel(IDialogService dialogService)
         {
+            this.dialogService = dialogService;
+
             Tags = new ObservableCollection<TagViewModel>();
             using (var context = new XMovieContext())
             {
                 foreach (var category in context.TagCategories)
                 {
-                    var tag = new TagViewModel()
+                    var tag = new TagViewModel(dialogService)
                     {
                         TagCategoryId = category.TagCategoryId,
                         CategoryName = category.Name
@@ -84,7 +89,7 @@ namespace XMovie.ViewModels
                                 var category = new TagCategory() { Name = categoryName };
                                 context.TagCategories.Add(category);
                                 context.SaveChanges();
-                                Tags.Add(new TagViewModel() {
+                                Tags.Add(new TagViewModel(this.dialogService) {
                                     TagCategoryId = category.TagCategoryId,
                                     CategoryName = categoryName
                                 });
@@ -92,7 +97,7 @@ namespace XMovie.ViewModels
                             }
                             NewCategoryName = "";
                         }
-                        SelectedMovies = selectedMovies; // TODO: どうにかして新しいTagControlに選択状態を伝えたい。。
+                        SelectedMovies = selectedMovies;
                     });
                 }
                 return addNewCategoryCommand;
@@ -109,8 +114,6 @@ namespace XMovie.ViewModels
             set { tags = value; }
         }
 
-        public ObservableCollection<TagViewModel> DistinctTags { get; set; }
-
         private ICommand addTagCommand;
         public ICommand AddTagCommand
         {
@@ -125,10 +128,7 @@ namespace XMovie.ViewModels
                         {
                             if (tag.TagCategoryId == tagParam.TagCategoryId)
                             {
-                                if (tag.AddTagCommand.CanExecute(param))
-                                {
-                                    tag.AddTagCommand.Execute(param);
-                                }
+                                tag.AddTagCommand.Execute(param);
                             }
                         }
                     });
@@ -148,16 +148,52 @@ namespace XMovie.ViewModels
                     {
                         foreach (TagViewModel tag in Tags)
                         {
-                            if (tag.RemoveTagCommand.CanExecute(param))
-                            {
-                                tag.RemoveTagCommand.Execute(param);
-                            }
+                            tag.RemoveTagCommand.Execute(param);
                         }
                     });
                 }
                 return removeTagCommand;
             }
-        } 
+        }
+
+        private ICommand removeCategoryCommand;
+        public ICommand RemoveCategoryCommand
+        {
+            get
+            {
+                if (removeCategoryCommand == null)
+                {
+                    removeCategoryCommand = new RelayCommand((param) =>
+                    {
+                        var tagViewModel = (TagViewModel)param;
+                        var categoryId = tagViewModel.TagCategoryId;
+
+                        // タグ/カテゴリを削除
+                        using (var context = new XMovieContext())
+                        {
+                            var deleteTags = context.Tags.Where(t => t.TagCategoryId == categoryId);
+                            var deleteTagId = deleteTags.Select(t => t.TagId);
+
+                            // TagMapsから削除
+                            var deleteTagMaps = context.TagMaps.Where(tm => deleteTagId.Contains(tm.TagId));
+                            context.TagMaps.RemoveRange(deleteTagMaps);
+
+                            // Tagsから削除
+                            context.Tags.RemoveRange(deleteTags);
+
+                            // Categoryを削除
+                            context.TagCategories.RemoveRange(context.TagCategories.Where(tc => tc.TagCategoryId == categoryId));
+
+                            context.SaveChanges();
+                        }
+
+                        Tags.Remove(Tags.Where(t => t.TagCategoryId == categoryId).FirstOrDefault());
+
+                    });
+                }
+                return removeCategoryCommand;
+            }
+        }
 
         #endregion
     }

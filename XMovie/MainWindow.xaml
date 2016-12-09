@@ -21,9 +21,11 @@
         Title="XMovie"
        >
 
+<!--
     <metro:MetroWindow.DataContext>
         <vm:MainWindowViewModel />
     </metro:MetroWindow.DataContext>
+    -->
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded">
             <ic:CallMethodAction TargetObject="{Binding}" MethodName="MainWindowLoaded" />
@@ -140,7 +142,7 @@
 
                 <!-- Logs -->
                 <Grid Grid.Row="2" >
-                    <ListView ItemsSource="{Binding Path=Logs.LogRecords}">
+                    <ListView ItemsSource="{Binding Path=Logs.LogRecords}" >
                         <i:Interaction.Triggers>
                             <i:EventTrigger EventName="Loaded">
                                 <ic:CallMethodAction TargetObject="{Binding Logs}" MethodName="LogViewLoaded" />

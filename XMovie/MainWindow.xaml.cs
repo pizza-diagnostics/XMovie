@@ -27,8 +27,9 @@ namespace XMovie
 
         public MainWindow()
         {
+            // InitializeComponent前にDataContextを設定しておくとLoadedが呼ばれる?
+            this.DataContext = new XMovie.ViewModels.MainWindowViewModel(new XMovie.Service.MetroDialogService());
             InitializeComponent();
         }
-
     }
 }

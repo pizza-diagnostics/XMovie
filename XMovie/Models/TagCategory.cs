@@ -15,5 +15,7 @@ namespace XMovie.Models
         [Required]
         [Index(IsUnique = true)]
         public string Name { get; set; }
+
+        public int SortOrder { get; set; }
     }
 }

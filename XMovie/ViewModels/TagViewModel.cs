@@ -6,11 +6,22 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using XMovie.Common;
 using XMovie.Models;
+using XMovie.Service;
+using MahApps.Metro.Controls.Dialogs;
+using MahApps.Metro.Controls;
+
 
 namespace XMovie.ViewModels
 {
     public class TagViewModel : ViewModelBase
     {
+        private IDialogService dialogService;
+
+        public TagViewModel(IDialogService dialogService)
+        {
+            this.dialogService = dialogService;
+        }
+
         #region Category
         private string categoryName;
         public string CategoryName
@@ -48,6 +59,7 @@ namespace XMovie.ViewModels
                                select new Tag() { Name = t.Name, TagId = t.TagId, TagCategoryId = t.TagCategoryId };
                     Tags = new ObservableCollection<Tag>(tags.ToList());
                     */
+                    // 妥協
                     var query = $@"
 select
     T.*
@@ -62,10 +74,6 @@ group by
 ";
                     var results = context.Database.SqlQuery<Tag>(query);
                     Tags = new ObservableCollection<Tag>(results);
-                    foreach (var result in results)
-                    {
-                        System.Diagnostics.Debug.Print($"{result.Name}");
-                    }
                 }
             }
         }
@@ -160,6 +168,22 @@ group by
                     });
                 }
                 return removeTagCommand;
+            }
+        }
+
+        private ICommand removeCategoryCommand;
+        public ICommand RemoveCategoryCommand
+        {
+            get
+            {
+                if (removeCategoryCommand == null)
+                {
+                    removeCategoryCommand = new RelayCommand(async (param) =>
+                    {
+                        var result = await this.dialogService.ShowConfirmDialog("foo", "bar");
+                    });
+                }
+                return removeCategoryCommand;
             }
         }
         #endregion
