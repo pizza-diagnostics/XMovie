@@ -327,6 +327,26 @@ namespace XMovie.ViewModels
             else
             {
                 // TODO: タグ検索
+                SearchMoviesWithTags(keys);
+            }
+        }
+
+        private void SearchMoviesWithTags(List<string> tagKeys)
+        {
+            using (var context = new XMovieContext())
+            {
+                Movies.Clear();
+                var query = context.Tags.Join(context.TagMaps, t => t.TagId, tm => tm.TagId, (t, tm) => new { t.Name, tm.MovieId });
+                foreach (var tag in tagKeys)
+                {
+                    query = query.Where(tmp => tmp.Name.Contains(tag));
+                }
+                var ids = query.Select(tmp => tmp.MovieId);
+                var movies = context.Movies.Where(m => ids.Contains(m.MovieId));
+                foreach (var movie in movies)
+                {
+                    Movies.Add(new MovieItemViewModel(movie.MovieId));
+                }
             }
         }
 
