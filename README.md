@@ -35,3 +35,4 @@ var arg = $"-ss {seconds} -i \"{moviePath}\" -vf scale=160:-1 -f image2 -an -y -
   + [TMPGEnc KARMA](http://tmpgenc.pegasys-inc.com/ja/product/tmka.html)
 * コーディング
   + [ダイアログ表示](http://sourcechord.hatenablog.com/entry/2016/01/23/170753)
+  + [ディレクトリ名比較](http://stackoverflow.com/questions/2281531/how-can-i-compare-directory-paths-in-c)
