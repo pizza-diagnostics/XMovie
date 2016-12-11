@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using XMovie.Common;
+using XMovie.Models.Settings;
 
 namespace XMovie.Models
 {
@@ -85,66 +86,73 @@ namespace XMovie.Models
 
         public Movie Import(string path)
         {
-            CreateThumbnailDirectory();
-
-            Movie movie = null;
-            using (var movieContext = new XMovieContext())
+            using (var context = new XMovieContext())
             {
+                var paths = context.Movies.Select(m => m.Path).ToList();
+                var count = paths.Where(p => Util.NormalizePath(p).Equals(Util.NormalizePath(path))).Count();
+                if (count > 0)
+                {
+                    logger.Information($"{path}は登録済みです。");
+                    return null;
+                }
+            }
+
+            CreateThumbnailDirectory();
+            Movie movie = null;
+            try
+            {
+                var md5 = Util.ComputeMD5(path);
+                var info = new FileInfo(path);
+                movie = new Movie()
+                {
+                    MovieId = Guid.NewGuid().ToString(),
+                    Path = path,
+                    MD5Sum = md5,
+                    FileCreateDate = info.CreationTime,
+                    FileModifiedDate = info.LastWriteTime,
+                    RegisteredDate = DateTime.Now,
+                };
+            }
+            catch (Exception ex)
+            {
+                throw new MovieImporterException($"{Path.GetFileName(path)}を開けません。\n",
+                    ex, MovieImporterException.Error.CannotReadFile);
+            }
+
+            var duration = GetMovieDuration(path);
+            logger.Debug($"{path} Duration: {duration}, md5sum: {movie.MD5Sum}");
+
+            // 1ファイルにつき5枚のサムネイルを作成する
+            var step = (int)duration / 6; // TODO: サムネイル作成の時間間隔設定方法
+            for (var i = 0; i < 5; i++)
+            {
+                var seconds = 10 + (i * step);
+                var fileName = $"{movie.MovieId}_{i + 1, 0:D3}.jpg";
+                var thumbnailPath = Path.Combine(Util.MovieThumbnailDirectory, fileName);
+                Thumbnail thumbnail = null;
                 try
                 {
-                    var md5 = Util.ComputeMD5(path);
-                    var info = new FileInfo(path);
-                    movie = new Movie()
-                    {
-                        MovieId = Guid.NewGuid().ToString(),
-                        Path = path,
-                        MD5Sum = md5,
-                        FileCreateDate = info.CreationTime,
-                        FileModifiedDate = info.LastWriteTime,
-                        RegisteredDate = DateTime.Now,
-                    };
+                    thumbnail = CreateMovieThumbnails(path, thumbnailPath, seconds);
                 }
                 catch (Exception ex)
                 {
-                    throw new MovieImporterException($"{Path.GetFileName(path)}を開けません。\n",
-                        ex, MovieImporterException.Error.CannotReadFile);
+                    // TODO: サムネイル作成エラーハンドリング
                 }
-
-                var duration = GetMovieDuration(path);
-                logger.Debug($"{path} Duration: {duration}, md5sum: {movie.MD5Sum}");
-
-                // 1ファイルにつき5枚のサムネイルを作成する
-                var step = (int)duration / 6; // TODO: サムネイル作成の時間間隔設定方法
-                for (var i = 0; i < 5; i++)
+                if (thumbnail == null)
                 {
-                    var seconds = 10 + (i * step);
-                    var fileName = $"{movie.MovieId}_{i + 1, 0:D3}.jpg";
-                    var thumbnailPath = Path.Combine(Util.MovieThumbnailDirectory, fileName);
-                    Thumbnail thumbnail = null;
-                    try
+                    break;
+                }
+                else
+                {
+                    thumbnail.Movie = movie;
+                    thumbnail.MovieId = movie.MovieId;
+                    thumbnail.Movie = movie;
+                    // 勝手にやるのはOK?
+                    if (movie.Thumbnails == null)
                     {
-                        thumbnail = CreateMovieThumbnails(path, thumbnailPath, seconds);
+                        movie.Thumbnails = new List<Thumbnail>();
                     }
-                    catch (Exception ex)
-                    {
-                        // TODO: サムネイル作成エラーハンドリング
-                    }
-                    if (thumbnail == null)
-                    {
-                        break;
-                    }
-                    else
-                    {
-                        thumbnail.Movie = movie;
-                        thumbnail.MovieId = movie.MovieId;
-                        thumbnail.Movie = movie;
-                        // 勝手にやるのはOK?
-                        if (movie.Thumbnails == null)
-                        {
-                            movie.Thumbnails = new List<Thumbnail>();
-                        }
-                        movie.Thumbnails.Add(thumbnail);
-                    }
+                    movie.Thumbnails.Add(thumbnail);
                 }
             }
             return movie;

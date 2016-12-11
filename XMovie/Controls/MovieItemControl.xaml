@@ -7,14 +7,17 @@
              xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
              xmlns:ic="clr-namespace:Microsoft.Expression.Interactivity.Core;assembly=Microsoft.Expression.Interactions"
              xmlns:metro="clr-namespace:MahApps.Metro;assembly=MahApps.Metro"
+             xmlns:metroc="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
              xmlns:local="clr-namespace:XMovie.Controls"
              xmlns:vm="clr-namespace:XMovie.ViewModels"
+             xmlns:p="clr-namespace:XMovie.Common.Properties"
              xmlns:control="clr-namespace:XMovie.Controls"
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300">
 
-    <Border Margin="0" Padding="5" Width="{Binding Path=MovieItemWidth}" Height="{Binding Path=MovieItemHeight}">
-        <Grid>
+    <Border Margin="0" Padding="5" Width="{Binding Path=MovieItemWidth}" Height="{Binding Path=MovieItemHeight}"
+            IsEnabled="{Binding IsEnabled}">
+        <Grid Tag="{Binding RelativeSource={RelativeSource AncestorType={x:Type metroc:MetroWindow}},Path=DataContext}">
             <Grid.RowDefinitions>
                 <RowDefinition />
                 <RowDefinition Height="*"/>
@@ -22,6 +25,49 @@
             <Grid.InputBindings>
                 <MouseBinding MouseAction="LeftDoubleClick" Command="{Binding PlayMovieCommand}" />
             </Grid.InputBindings>
+            <Grid.ToolTip>
+                <ToolTip Content="{Binding Path}" />
+            </Grid.ToolTip>
+            <Grid.ContextMenu>
+                <ContextMenu Padding="10">
+                    <ContextMenu.Resources>
+                        <ResourceDictionary>
+                            <VisualBrush x:Key="FileNameChangeIcon" Visual="{StaticResource appbar_interface_textbox}" />
+                            <VisualBrush x:Key="FileMoveIcon" Visual="{StaticResource appbar_edit_box}" />
+                            <VisualBrush x:Key="FileDeleteIcon" Visual="{StaticResource appbar_delete}" />
+                            <VisualBrush x:Key="FolderOpenIcon" Visual="{StaticResource appbar_folder_open}" />
+                        </ResourceDictionary>
+                    </ContextMenu.Resources>
+                    <MenuItem Header="登録解除" 
+                              Command="{Binding Path=PlacementTarget.Tag.UnregisterMovieCommand,RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ContextMenu}}"
+                              CommandParameter="{Binding}"
+                              >
+                    </MenuItem>
+                    <MenuItem Header="ファイル移動"
+                              Command="{Binding Path=PlacementTarget.Tag.MoveMovieCommand,RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ContextMenu}}"
+                              CommandParameter="{Binding}"
+                              >
+                        <MenuItem.Icon>
+                            <Rectangle Width="16" Height="16" Fill="{StaticResource FileMoveIcon}" />
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="ファイル名変更"
+                              Command="{Binding BeginRenameCommand}" >
+                        
+                        <MenuItem.Icon>
+                            <Rectangle Width="16" Height="16" Fill="{StaticResource FileNameChangeIcon}" />
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <Separator />
+                    <MenuItem Header="動画フォルダを開く" Command="{Binding OpenMovieDirectoryCommand}">
+                        <MenuItem.Icon>
+                            <Rectangle Width="16" Height="16" Fill="{StaticResource FolderOpenIcon}" />
+                        </MenuItem.Icon>
+                    </MenuItem>
+
+                </ContextMenu>
+            </Grid.ContextMenu>
+            
             <Grid>
                 <Image Stretch="Uniform" Source="{Binding Path=ThumbnailImage}"
                        Height="{Binding Path=ThumbnailHeight}"
@@ -30,11 +76,31 @@
                        VerticalAlignment="Center"/>
 
                 <Grid Background="#6C000000" Height="20" VerticalAlignment="Top">
+                    <Grid.Resources>
+                        <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+                    </Grid.Resources>
                     <TextBlock TextTrimming="CharacterEllipsis"
                                VerticalAlignment="Center"
                                HorizontalAlignment="Stretch"
                                Margin="5,0" 
                                Text="{Binding Path=FileName}"/>
+                    <TextBox VerticalAlignment="Center" x:Name="RenameTextBox"
+                             Visibility="{Binding IsRenameMode,Converter={StaticResource BoolToVisibility}}"
+                             Text="{Binding EditFileName,Mode=OneWay}"
+                             p:FocusProperty.IsFocused="{Binding IsRenameMode}"
+                             metroc:TextBoxHelper.SelectAllOnFocus="True"
+                             HorizontalAlignment="Stretch">
+                        <TextBox.InputBindings>
+                            <KeyBinding Command="{Binding RenameCommand}"
+                                        Key="Return"
+                                        CommandParameter="{Binding ElementName=RenameTextBox,Path=Text}" />
+                            <KeyBinding Command="{Binding RenameCancelCommand}"
+                                        Key="Esc" />
+                        </TextBox.InputBindings>
+                        <TextBox.Triggers>
+                            
+                        </TextBox.Triggers>
+                    </TextBox>
                 </Grid>
             </Grid>
 

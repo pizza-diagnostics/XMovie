@@ -1,0 +1,276 @@
+﻿<metro:MetroWindow x:Class="XMovie.SettingWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
+        xmlns:metro="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+        xmlns:mb="http://metro.mahapps.com/winfx/xaml/shared"
+        xmlns:local="clr-namespace:XMovie"
+        xmlns:behaviors="clr-namespace:XMovie.Common.Behaviors"
+        xmlns:vm="clr-namespace:XMovie.ViewModels"
+        mc:Ignorable="d"
+                   
+        ResizeMode="CanResizeWithGrip"
+        BorderThickness="0"
+        GlowBrush="White"
+        WindowStartupLocation="CenterOwner"
+        WindowTransitionsEnabled="False"
+        ShowMaxRestoreButton="False"
+        ShowMinButton="False"
+        Title="Setting" Height="500" Width="700">
+
+    <i:Interaction.Behaviors>
+        <mb:BorderlessWindowBehavior />
+        <mb:WindowsSettingBehaviour />
+        <mb:GlowWindowBehavior />
+        <behaviors:WindowCloseBehavior CloseButton="{Binding ElementName=OKButton}" Command="{Binding SaveCommand}"/>
+        <behaviors:WindowCloseBehavior CloseButton="{Binding ElementName=CancelButton}"/>
+    </i:Interaction.Behaviors>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition />
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <TabControl>
+            <TabControl.Resources>
+                <Style TargetType="{x:Type TabItem}" BasedOn="{StaticResource {x:Type TabItem}}">
+                    <Setter Property="metro:ControlsHelper.HeaderFontSize" Value="14" />
+                </Style>
+            </TabControl.Resources>
+            <TabItem Header="監視ディレクトリ">
+                <ListView ItemsSource="{Binding DirectoryMonitors}">
+                    <ListView.Resources>
+                        <Style TargetType="{x:Type GridViewColumnHeader}" BasedOn="{StaticResource {x:Type GridViewColumnHeader}}">
+                            <Setter Property="HorizontalContentAlignment" Value="Left" />
+                        </Style>
+                    </ListView.Resources>
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="起動時チェック" Width="90">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding IsBootCheckEnabled}" HorizontalAlignment="Center"/>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="監視" Width="50">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding IsMonitorEnabled}" HorizontalAlignment="Center"/>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="再帰" Width="50">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding IsRecursive}" HorizontalAlignment="Center"/>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="削除" Width="50">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button BorderThickness="0"
+                                                HorizontalAlignment="Center"
+                                                Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                                                Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type metro:MetroWindow}},Path=DataContext.RemoveDirectoryMonitorCommand}"
+                                                CommandParameter="{Binding .}"
+                                                >
+                                            <Rectangle Width="10" Height="10" >
+                                                <Rectangle.Fill>
+                                                    <VisualBrush Stretch="Fill"
+                                                                 Visual="{StaticResource appbar_close}" />
+                                                </Rectangle.Fill>
+                                            </Rectangle>
+                                        </Button>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="ディレクトリ" Width="500">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Path}" TextTrimming="CharacterEllipsis" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </TabItem>
+
+            <TabItem Header="動画拡張子">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <GroupBox Header="Default">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ListBox ItemsSource="{Binding DefaultMovieExtensions}">
+                                <ListBox.Template>
+                                    <ControlTemplate>
+                                        <DockPanel LastChildFill="True">
+                                            <Grid DockPanel.Dock="Top" Height="30" >
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="40" />
+                                                    <ColumnDefinition Width="60" />
+                                                </Grid.ColumnDefinitions>
+                                                <Label Grid.Column="0">有効</Label>
+                                                <Label Grid.Column="1">拡張子</Label>
+                                            </Grid>
+                                            <ItemsPresenter />
+                                        </DockPanel>
+                                    </ControlTemplate>
+                                </ListBox.Template>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="40" />
+                                                <ColumnDefinition Width="60" />
+                                            </Grid.ColumnDefinitions>
+                                            <CheckBox Grid.Column="0" IsChecked="{Binding IsEnabled}" />
+                                            <TextBlock Grid.Column="1" Text="{Binding Ext}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </ScrollViewer>
+                        
+                    </GroupBox>
+                    <GroupBox Grid.Column="1" Header="Custom">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition />
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <ListBox ItemsSource="{Binding CustomMovieExtensions}">
+                                    <ListBox.Template>
+                                        <ControlTemplate>
+                                            <DockPanel LastChildFill="True">
+                                                <Grid DockPanel.Dock="Top" Height="30" >
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="40" />
+                                                        <ColumnDefinition Width="60" />
+                                                        <ColumnDefinition Width="40" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Label Grid.Column="0">有効</Label>
+                                                    <Label Grid.Column="1">拡張子</Label>
+                                                    <Label Grid.Column="2">削除</Label>
+                                                </Grid>
+                                                <ItemsPresenter />
+                                            </DockPanel>
+                                        </ControlTemplate>
+                                    </ListBox.Template>
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="40" />
+                                                    <ColumnDefinition Width="60" />
+                                                    <ColumnDefinition Width="30" />
+                                                </Grid.ColumnDefinitions>
+                                                <CheckBox Grid.Column="0" IsChecked="{Binding IsEnabled}" />
+                                                <TextBlock Grid.Column="1" Text="{Binding Ext}" />
+                                                <Button Grid.Column="2" BorderThickness="0"
+                                                        Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                                                        Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type metro:MetroWindow}},Path=DataContext.RemoveMovieExtensionCommand}"
+                                                        CommandParameter="{Binding .}">
+                                                    <Rectangle Width="10" Height="10" >
+                                                        <Rectangle.Fill>
+                                                            <VisualBrush Stretch="Fill"
+                                                                         Visual="{StaticResource appbar_close}" />
+                                                        </Rectangle.Fill>
+                                                    </Rectangle>
+                                                </Button>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </ScrollViewer>
+                            <Grid Grid.Row="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBox x:Name="NewMovieExtensionTextBox"
+                                         metro:TextBoxHelper.Watermark="新しい拡張子"
+                                         Margin="5"
+                                         Text="{Binding NewMovieExtension, UpdateSourceTrigger=PropertyChanged}">
+                                    <TextBox.InputBindings>
+                                        <KeyBinding Command="{Binding AddMovieExtensionCommand}"
+                                                        Key="Return"
+                                                        CommandParameter="{Binding ElementName=NewMovieExtensionTextBox,Path=Text}" />
+                                    </TextBox.InputBindings>
+                                </TextBox>
+                                <Button Grid.Column="1" Margin="5,5,20,5"
+                                        Command="{Binding AddMovieExtensionCommand}"
+                                        Width="30"
+                                        Height="30"
+                                        Padding="0">
+                                    <Rectangle Width="20" Height="20">
+                                        <Rectangle.Fill>
+                                            <VisualBrush Stretch="Fill" Visual="{StaticResource appbar_arrow_up}" />
+                                        </Rectangle.Fill>
+                                    </Rectangle>
+                                </Button>
+                            </Grid>
+                        </Grid>
+                        
+                    </GroupBox>
+                        
+                </Grid>
+            <!--
+                <ListView ItemsSource="{Binding Path=MovieExtensions}">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="有効" Width="40">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding Path=IsEnabled}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="拡張子" Width="100">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Path=Ext}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Width="40">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Visibility="{Binding}">
+                                            <Rectangle Width="10" Height="10" >
+                                                <Rectangle.Fill>
+                                                    <VisualBrush Stretch="Fill" Visual="{StaticResource appbar_close}" />
+                                                </Rectangle.Fill>
+                                            </Rectangle>
+                                        </Button>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+                -->
+            </TabItem>
+        </TabControl>
+        <Grid Grid.Row="1" Margin="5">
+
+            <StackPanel Orientation="Horizontal"  HorizontalAlignment="Right">
+                <Button Width="50" Margin="0,0,10,0" x:Name="OKButton">OK</Button>
+                <Button Width="50" Margin="0,0,10,0" x:Name="CancelButton">Cancel</Button>
+            </StackPanel>
+        </Grid>
+        <StatusBar Grid.Row="2">
+            Setting
+        </StatusBar>
+    </Grid>
+</metro:MetroWindow>

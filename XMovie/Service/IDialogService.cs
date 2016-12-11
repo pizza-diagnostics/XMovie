@@ -9,5 +9,7 @@ namespace XMovie.Service
     public interface IDialogService
     {
         Task<bool> ShowConfirmDialog(string title, string message);
+
+        void ShowSettingWindow();
     }
 }

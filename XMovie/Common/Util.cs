@@ -55,5 +55,17 @@ namespace XMovie.Common
                 return BitConverter.ToString(MD5.Create().ComputeHash(stream)).ToLower().Replace("-", "");
             }
         }
+
+        public static string NormalizePath(string path)
+        {
+            return Path.GetFullPath(new Uri(path).LocalPath)
+                       .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                       .ToUpperInvariant();
+        }
+
+        public static bool IsEqualsNormalizedPath(string path1, string path2)
+        {
+            return NormalizePath(path1).Equals(NormalizePath(path2));
+        }
     }
 }

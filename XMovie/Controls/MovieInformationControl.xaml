@@ -31,7 +31,7 @@
             </Grid.ColumnDefinitions>
 
             <TextBox x:Name="NewCategoryTextBox"
-                     metro:TextBoxHelper.Watermark="新しいカテゴリ"
+                     metro:TextBoxHelper.Watermark="New category"
                      Margin="5"
                      Text="{Binding NewCategoryName, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}">
                 <TextBox.InputBindings>

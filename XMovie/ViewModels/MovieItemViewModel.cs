@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data.Entity;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -39,6 +40,20 @@ namespace XMovie.ViewModels
 
         public string MovieId { get; private set; }
 
+        public bool IsEnabled { get; set; } = true;
+
+        private bool isRenameMode;
+        public bool IsRenameMode
+        {
+            get { return isRenameMode; }
+            set { SetProperty(ref isRenameMode, value, "IsRenameMode"); }
+        }
+
+        public string EditFileName
+        {
+            get { return System.IO.Path.GetFileNameWithoutExtension(FileName); }
+        }
+
         private ObservableCollection<TagMapViewModel> tagMaps;
         public ObservableCollection<TagMapViewModel> TagMaps
         {
@@ -50,29 +65,26 @@ namespace XMovie.ViewModels
         public int Rank
         {
             get { return rank; }
-            set
-            {
-                SetProperty(ref rank, value, "Rank");
-            }
+            set { SetProperty(ref rank, value, "Rank"); }
         }
 
         private int playCount;
         public int PlayCount
         {
             get { return playCount; }
-            set
-            {
-                SetProperty(ref playCount, value, "PlayCount");
-            }
+            set { SetProperty(ref playCount, value, "PlayCount"); }
         }
 
         private string path;
         public string Path
         {
             get { return path; }
-            set
-            {
-                SetProperty(ref path, value, "Path");
+            set {
+                if (SetProperty(ref path, value, "Path"))
+                {
+                    OnPropertyChanged("FileName");
+                    OnPropertyChanged("EditFileName");
+                }
             }
         }
 
@@ -151,7 +163,14 @@ namespace XMovie.ViewModels
                             {
                                 break;
                             }
-                            var bitmapImage = new BitmapImage(new Uri(item.t.Path));
+
+                            BitmapSource bitmapImage;
+                            using (var stream = new FileStream(item.t.Path, FileMode.Open, FileAccess.Read))
+                            {
+                                var decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+                                bitmapImage = decoder.Frames[0];
+                            }
+
                             dc.DrawImage(bitmapImage, new Rect(x, 0, bitmapImage.PixelWidth, bitmapImage.PixelHeight));
                             y = bitmapImage.PixelHeight; // 固定
                             x += bitmapImage.PixelWidth;
@@ -269,6 +288,112 @@ namespace XMovie.ViewModels
                     });
                 }
                 return removeTagCommand;
+            }
+        }
+
+        private ICommand beginRenameCommand;
+        public ICommand BeginRenameCommand
+        {
+            get
+            {
+                if (beginRenameCommand == null)
+                {
+                    beginRenameCommand = new RelayCommand((param) => { IsRenameMode = true; });
+                }
+                return beginRenameCommand;
+            }
+        }
+
+        private ICommand renameCommand;
+        public ICommand RenameCommand
+        {
+            get
+            {
+                if (renameCommand == null)
+                {
+                    renameCommand = new RelayCommand((param) =>
+                    {
+                        string newFileName = (string)param;
+                        var invalidChars = System.IO.Path.GetInvalidFileNameChars();
+                        if (newFileName.Any(c => invalidChars.Contains(c)))
+                        {
+                            logger.Error("ファイル名に使用できない文字が含まれています。");
+                            IsRenameMode = true;
+                            return;
+                        }
+
+                        var ext = System.IO.Path.GetExtension(Path);
+                        var destPath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Path), newFileName + ext);
+                        DirectoryMonitor.Instance.PauseMonitor();
+                        try
+                        {
+                            File.Move(Path, destPath);
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.Error(ex);
+                            IsRenameMode = true;
+                        }
+                        finally
+                        {
+                            DirectoryMonitor.Instance.ResumeMonitor();
+                        }
+
+                        IsRenameMode = false;
+
+                        using (var context = new XMovieContext())
+                        {
+                            var movie = context.Movies.Where(m => m.MovieId == MovieId).FirstOrDefault();
+                            if (movie != null)
+                            {
+                                logger.Information($"ファイル名を変更しました。{movie.Path} -> {destPath}");
+                                movie.Path = destPath;
+                            }
+                            context.SaveChanges();
+                            Path = destPath;
+                        }
+                    });
+                }
+                return renameCommand;
+            }
+        }
+
+        private ICommand renameCancelCommand;
+        public ICommand RenameCancelCommand
+        {
+            get
+            {
+                if (renameCancelCommand == null)
+                {
+                    renameCancelCommand = new RelayCommand((param) =>
+                    {
+                        IsRenameMode = false;
+                    });
+                }
+                return renameCancelCommand;
+            }
+        }
+
+        private ICommand openMovieDirectoryCommand;
+        public ICommand OpenMovieDirectoryCommand
+        {
+            get
+            {
+                if (openMovieDirectoryCommand == null)
+                {
+                    openMovieDirectoryCommand = new RelayCommand((param) =>
+                    {
+                        try
+                        {
+                            System.Diagnostics.Process.Start(System.IO.Path.GetDirectoryName(Path));
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.Error(ex);
+                        }
+                    });
+                }
+                return openMovieDirectoryCommand;
             }
         }
         #endregion

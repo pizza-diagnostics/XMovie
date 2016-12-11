@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Interactivity;
 
-namespace XMovie.Common
+namespace XMovie.Common.Behaviors
 {
     public class ScrollIntoViewBehavior : Behavior<ListView>
     {
