@@ -36,3 +36,4 @@ var arg = $"-ss {seconds} -i \"{moviePath}\" -vf scale=160:-1 -f image2 -an -y -
 * コーディング
   + [ダイアログ表示](http://sourcechord.hatenablog.com/entry/2016/01/23/170753)
   + [ディレクトリ名比較](http://stackoverflow.com/questions/2281531/how-can-i-compare-directory-paths-in-c)
+  + [ウィンドウクローズ](http://stackoverflow.com/questions/4376475/wpf-mvvm-how-to-close-a-window)
