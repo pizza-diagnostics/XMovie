@@ -33,11 +33,61 @@ namespace XMovie.Models.Settings
         public WindowState MainWindowState { get; set; } = WindowState.Normal;
 
         public bool IsFileSearch { get; set; } = false;
-        public ObservableCollection<string> SearchHistories { get; set; } = new ObservableCollection<string>();
+        public ObservableCollection<string> SearchHistories { get; set; }
+            = new ObservableCollection<string>();
+
+        public ObservableCollection<DirectoryMonitorSettings> DirectoryMonitors { get; set; } 
+            = new ObservableCollection<DirectoryMonitorSettings>();
+
+        public ObservableCollection<FileExtensionSettings> CustomMovieExtensions { get; set; }
+            = new ObservableCollection<FileExtensionSettings>();
+
+        public ObservableCollection<FileExtensionSettings> DefaultMovieExtensions { get; set; }
+            = FileExtensionSettings.GetDefaultMovieExtensions();
 
         public UserSettings()
         {
             thumbnailCount = 3;
+            CheckUpdateDefaultMovieExtensions();
+        }
+
+        public List<string> GetImportableMovieExtensions()
+        {
+            var importable = new List<string>();
+
+            var exts = new ICollection<FileExtensionSettings>[]
+            {
+                DefaultMovieExtensions,
+                CustomMovieExtensions
+            };
+
+            foreach (var list in exts)
+            {
+                var l = list.Where(e => e.IsEnabled).Select(e => "." + e.Ext.ToLower()).ToList();
+                if (l.Count() > 0)
+                {
+                    importable.AddRange(l);
+                }
+            }
+            return importable;
+        }
+
+        private void CheckUpdateDefaultMovieExtensions()
+        {
+            var defaultSettings = FileExtensionSettings.GetDefaultMovieExtensions();
+            var list = DefaultMovieExtensions.ToList();
+            var lost = new List<FileExtensionSettings>();
+            foreach (var s in defaultSettings)
+            {
+                if (list.Find(t => s.Ext.Equals(t.Ext)) == null)
+                {
+                    lost.Add(s);
+                }
+            }
+            foreach (var s in lost)
+            {
+                DefaultMovieExtensions.Add(s);
+            }
         }
     }
 }

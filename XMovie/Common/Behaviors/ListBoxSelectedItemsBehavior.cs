@@ -9,7 +9,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interactivity;
 
-namespace XMovie.Common
+namespace XMovie.Common.Behaviors
 {
     public class ListBoxSelectedItemsBehavior : Behavior<ListBox>
     {
@@ -22,6 +22,7 @@ namespace XMovie.Common
                 IsCleanedUp = true;
 
                 AssociatedObject.SelectionChanged -= AssociatedObject_SelectionChanged;
+                AssociatedObject.Unloaded -= AssociatedObject_Unloaded;
             }
         }
 
@@ -29,6 +30,7 @@ namespace XMovie.Common
         {
             base.OnAttached();
             AssociatedObject.SelectionChanged += AssociatedObject_SelectionChanged;
+            AssociatedObject.Unloaded += AssociatedObject_Unloaded;
         }
 
         protected override void OnDetaching()
@@ -42,6 +44,11 @@ namespace XMovie.Common
             var array = new object[AssociatedObject.SelectedItems.Count];
             AssociatedObject.SelectedItems.CopyTo(array, 0);
             SelectedItems = new ObservableCollection<object>(array);
+        }
+
+        private void AssociatedObject_Unloaded(object sender, RoutedEventArgs e)
+        {
+            CleanUp();
         }
 
         private static readonly DependencyProperty SelectedItemsProperty =

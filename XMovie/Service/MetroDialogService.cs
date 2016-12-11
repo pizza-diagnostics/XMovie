@@ -23,5 +23,11 @@ namespace XMovie.Service
 
             return dialogResult == MessageDialogResult.Affirmative;
         }
+
+        public void ShowSettingWindow()
+        {
+            var window = new SettingWindow();
+            window.ShowDialog();
+        }
     }
 }

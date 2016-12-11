@@ -180,10 +180,12 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="Common\FileDropBehavior.cs" />
-    <Compile Include="Common\ListBoxSelectedItemsBehavior.cs" />
+    <Compile Include="Common\Behaviors\FileDropBehavior.cs" />
+    <Compile Include="Common\Behaviors\ListBoxSelectedItemsBehavior.cs" />
+    <Compile Include="Common\Behaviors\WindowCloseBehavior.cs" />
+    <Compile Include="Common\Properties\FocusProperty.cs" />
     <Compile Include="Common\RelayCommand.cs" />
-    <Compile Include="Common\ScrollIntoViewBehavior.cs" />
+    <Compile Include="Common\Behaviors\ScrollIntoViewBehavior.cs" />
     <Compile Include="Common\TagCommandParameterConverter.cs" />
     <Compile Include="Common\Util.cs" />
     <Compile Include="Controls\MovieInformationControl.xaml.cs">
@@ -192,18 +194,25 @@
     <Compile Include="Controls\TagControl.xaml.cs">
       <DependentUpon>TagControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Models\DisplayMovieCollection.cs" />
+    <Compile Include="Models\DirectoryMonitor.cs" />
+    <Compile Include="Models\MovieDispatcher.cs" />
     <Compile Include="Models\MovieImporter.cs" />
     <Compile Include="Models\MovieImporterException.cs" />
+    <Compile Include="Models\Settings\DirectoryMonitorSettings.cs" />
+    <Compile Include="Models\Settings\FileExtensionSettings.cs" />
     <Compile Include="Models\Settings\UserSettingManager.cs" />
     <Compile Include="Models\Settings\UserSettings.cs" />
     <Compile Include="Models\TagCommandParameter.cs" />
     <Compile Include="Service\IDialogService.cs" />
     <Compile Include="Service\MetroDialogService.cs" />
+    <Compile Include="SettingWindow.xaml.cs">
+      <DependentUpon>SettingWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="ViewModels\LogListViewModel.cs" />
     <Compile Include="ViewModels\MainWindowViewModel.cs" />
     <Compile Include="ViewModels\MovieInformationViewModel.cs" />
     <Compile Include="ViewModels\MovieItemViewModel.cs" />
+    <Compile Include="ViewModels\SettingWindowViewModel.cs" />
     <Compile Include="ViewModels\TagViewModel.cs" />
     <Compile Include="ViewModels\TagMapViewModel.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
@@ -249,6 +258,10 @@
     <Page Include="Resources\IconsNonShared.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="SettingWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
   <ItemGroup>

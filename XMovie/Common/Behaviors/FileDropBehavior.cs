@@ -9,7 +9,7 @@ using System.Windows.Input;
 using System.Windows.Interactivity;
 using static System.Diagnostics.Debug;
 
-namespace XMovie.Common
+namespace XMovie.Common.Behaviors
 {
     public class FileDropBehavior : Behavior<FrameworkElement>
     {
@@ -31,6 +31,7 @@ namespace XMovie.Common
 
                 AssociatedObject.DragOver -= AssociatedObject_DragOver;
                 AssociatedObject.Drop -= AssociatedObject_Drop;
+                AssociatedObject.Unloaded -= AssociatedObject_Unloaded;
             }
         }
 
@@ -41,6 +42,7 @@ namespace XMovie.Common
 
             AssociatedObject.DragOver += AssociatedObject_DragOver;
             AssociatedObject.Drop += AssociatedObject_Drop;
+            AssociatedObject.Unloaded += AssociatedObject_Unloaded;
         }
 
         protected override void OnDetaching()
@@ -64,6 +66,11 @@ namespace XMovie.Common
                 e.Effects = DragDropEffects.None;
             }
             e.Handled = true;
+        }
+
+        private void AssociatedObject_Unloaded(object sender, RoutedEventArgs e)
+        {
+            CleanUp();
         }
     }
 }

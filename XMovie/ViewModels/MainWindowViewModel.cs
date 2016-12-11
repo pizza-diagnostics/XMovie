@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,7 +16,6 @@ namespace XMovie.ViewModels
 {
     public class MainWindowViewModel : ViewModelBase
     {
-        private UserSettings userSettings;
         private Logger logger = Logger.Instace;
 
         public ObservableCollection<MovieItemViewModel> Movies { get; private set; }
@@ -24,12 +24,18 @@ namespace XMovie.ViewModels
 
         public LogListViewModel Logs { get; private set; } = new LogListViewModel();
 
-        private IDialogService dialogService; 
+        private IDialogService dialogService;
+        private DirectoryMonitor monitor;
+        private MovieDispatcher movieDispatcher = new MovieDispatcher();
+
+        private volatile bool isShutdown = false;
 
         public MainWindowViewModel(IDialogService dialogService)
         {
             this.dialogService = dialogService;
             MovieInformation = new MovieInformationViewModel(dialogService);
+
+            Application.Current.Dispatcher.ShutdownStarted += (s, e) => { isShutdown = true; };
 
             using (var context = new XMovieContext())
             {
@@ -42,24 +48,41 @@ namespace XMovie.ViewModels
                 }
             }
 
-            userSettings = UserSettingManager.Instance.GetUserSettings();
-            userSettings.ThumbnailCountChanged += ((sender, count) =>
+            Settings = UserSettingManager.Instance.GetUserSettings();
+            Settings.ThumbnailCountChanged += ((sender, count) =>
             {
                 foreach (var movieModel in Movies)
                 {
                     movieModel.ThumbnailCount = count;
                 }
             });
+
+            var monitor = DirectoryMonitor.Instance;
+            monitor.MovieRemoved += Monitor_MovieRemoved;
+            monitor.MovieAdded += Monitor_MovieAdded;
+            monitor.MovieNameChanged += Monitor_MovieNameChanged;
         }
 
         public void MainWindowLoaded()
         {
         }
 
+        public void LogViewLoaded()
+        {
+            Logs.LogViewLoaded();
+
+            // ログ表示のためLogViewLoadedをトリガとする
+            StartMonitor();
+            foreach (var ms in Settings.DirectoryMonitors.Where(dm => dm.IsBootCheckEnabled))
+            {
+                CheckDirectory(ms);
+            }
+        }
+
         #region Properties
         public int ThumbnailCount
         {
-            get { return userSettings.ThumbnailCount; }
+            get { return Settings.ThumbnailCount; }
             set
             {
                 if (value < 1 || value > 5)
@@ -68,7 +91,7 @@ namespace XMovie.ViewModels
                 }
                 else
                 {
-                    userSettings.ThumbnailCount = value;
+                    Settings.ThumbnailCount = value;
                 }
             }
         }
@@ -87,55 +110,13 @@ namespace XMovie.ViewModels
                 });
             }
         }
+
+        public UserSettings Settings { get; set; }
+
         public int ThumbnailCountListIndex
         {
-            get { return userSettings.ThumbnailCount - 1; }
-            set
-            {
-                userSettings.ThumbnailCount = value + 1;
-            }
-        }
-
-        public int MainWindowWidth
-        {
-            get { return userSettings.MainWindowWidth; }
-            set { userSettings.MainWindowWidth = value; }
-        }
-
-        public int MainWindowHeight
-        {
-            get { return userSettings.MainWindowHeight; }
-            set { userSettings.MainWindowHeight = value; }
-        }
-
-        public int MainWindowTop
-        {
-            get { return userSettings.MainWindowTop; }
-            set { userSettings.MainWindowTop = value; }
-        }
-
-        public int MainWindowLeft
-        {
-            get { return userSettings.MainWindowLeft; }
-            set { userSettings.MainWindowLeft = value; }
-        }
-
-        public WindowState MainWindowState
-        {
-            get { return userSettings.MainWindowState; }
-            set { userSettings.MainWindowState = value; }
-        }
-
-        public bool IsFileSearch
-        {
-            get { return userSettings.IsFileSearch; }
-            set { userSettings.IsFileSearch = value; }
-        }
-
-        public ObservableCollection<string> SearchHistories
-        {
-            get { return userSettings.SearchHistories; }
-            set { userSettings.SearchHistories = value; }
+            get { return Settings.ThumbnailCount - 1; }
+            set { Settings.ThumbnailCount = value + 1; }
         }
 
         #endregion
@@ -167,42 +148,27 @@ namespace XMovie.ViewModels
                 {
                     fileDropCommand = new RelayCommand(async (parameter) =>
                     {
-                        await Task.Run(() =>
+                        await Task.Run(async () =>
                         {
                             var files = parameter as string[];
                             if (files != null)
                             {
+                                var exts = UserSettingManager.Instance.GetUserSettings().GetImportableMovieExtensions(); ;
                                 var importer = new MovieImporter();
                                 foreach (var file in files)
                                 {
-                                    try
+                                    if (Directory.Exists(file))
                                     {
-                                        var movie = importer.Import(file);
-                                        App.Current.Dispatcher.Invoke(() =>
-                                        {
-                                            using (var context = new XMovieContext())
-                                            {
-                                                context.Movies.Add(movie);
-                                                foreach (var thumbnail in movie.Thumbnails)
-                                                {
-                                                    context.Thumbnails.Add(thumbnail);
-                                                }
-                                                context.SaveChanges();
-                                            }
-                                            Movies.Add(new MovieItemViewModel(movie.MovieId));
-                                        });
+                                        // 監視ディレクトリとして追加
+                                        AddDirectoryMonitor(file);
+                                        continue;
                                     }
-                                    catch (MovieImporterException ex)
+                                    if (!exts.Contains(Path.GetExtension(file).ToLower()))
                                     {
-                                        if (ex.Reason == MovieImporterException.Error.FFProbeError)
-                                        {
-                                            logger.Warning(ex);
-                                        }
-                                        else
-                                        {
-                                            logger.Error(ex);
-                                        }
+                                        logger.Warning($"対応していない拡張子です。{file}");
+                                        continue;
                                     }
+                                    await movieDispatcher.ImportMovie(file, Movies);
                                 }
                             }
                         });
@@ -296,20 +262,68 @@ namespace XMovie.ViewModels
                 return removeCategoryCommand;
             }
         }
+
+        private ICommand settingCommand;
+        public ICommand SettingCommand
+        {
+            get
+            {
+                if (settingCommand == null)
+                {
+                    settingCommand = new RelayCommand((param) =>
+                    {
+                        dialogService.ShowSettingWindow();
+                    });
+                }
+                return settingCommand;
+            }
+        }
+
+        private ICommand unregisterMovieCommand;
+        public ICommand UnregisterMovieCommand
+        {
+            get
+            {
+                if (unregisterMovieCommand == null)
+                {
+                    unregisterMovieCommand = new RelayCommand(async (param) =>
+                    {
+                        MovieItemViewModel movie = (MovieItemViewModel)param;
+                        movie.IsEnabled = false;
+                        await movieDispatcher.UnregisterMovie(movie.MovieId, Movies);
+                    });
+                }
+                return unregisterMovieCommand;
+            }
+        }
+
         #endregion
+
+        private void StartMonitor()
+        {
+
+            var monitor = DirectoryMonitor.Instance;
+
+            monitor.StopMonitor();
+
+            var exts = Settings.GetImportableMovieExtensions();
+
+            monitor.StartMonitor(Settings.DirectoryMonitors, exts);
+        }
+
 
         private void AddSearchHistory(string keywords)
         {
-            if (SearchHistories.Contains(keywords))
+            if (Settings.SearchHistories.Contains(keywords))
             {
-                SearchHistories.Move(SearchHistories.IndexOf(keywords), 0);
+                Settings.SearchHistories.Move(Settings.SearchHistories.IndexOf(keywords), 0);
             }
             else
             {
-                SearchHistories.Insert(0, keywords);
-                if (SearchHistories.Count > 50)
+                Settings.SearchHistories.Insert(0, keywords);
+                if (Settings.SearchHistories.Count > 50)
                 {
-                    SearchHistories.RemoveAt(SearchHistories.Count - 1);
+                    Settings.SearchHistories.RemoveAt(Settings.SearchHistories.Count - 1);
                 }
             }
         }
@@ -320,13 +334,12 @@ namespace XMovie.ViewModels
             AddSearchHistory(keywords);
 
             var keys = new List<string>(keywords.Split(new char[] { ',', ' ', '　', '、' }, StringSplitOptions.RemoveEmptyEntries));
-            if (IsFileSearch)
+            if (Settings.IsFileSearch)
             {
                 SearchMoviesWithPath(keys);
             }
             else
             {
-                // TODO: タグ検索
                 SearchMoviesWithTags(keys);
             }
         }
@@ -336,16 +349,26 @@ namespace XMovie.ViewModels
             using (var context = new XMovieContext())
             {
                 Movies.Clear();
-                var query = context.Tags.Join(context.TagMaps, t => t.TagId, tm => tm.TagId, (t, tm) => new { t.Name, tm.MovieId });
-                foreach (var tag in tagKeys)
+                if (tagKeys.Count() > 0)
                 {
-                    query = query.Where(tmp => tmp.Name.Contains(tag));
+                    var query = context.Tags.Join(context.TagMaps, t => t.TagId, tm => tm.TagId, (t, tm) => new { t.Name, tm.MovieId });
+                    foreach (var tag in tagKeys)
+                    {
+                        query = query.Where(tmp => tmp.Name.Contains(tag));
+                    }
+                    var ids = query.Select(tmp => tmp.MovieId).ToList();
+                    var movies = context.Movies.Where(m => ids.Contains(m.MovieId));
+                    foreach (var movie in movies)
+                    {
+                        Movies.Add(new MovieItemViewModel(movie.MovieId));
+                    }
                 }
-                var ids = query.Select(tmp => tmp.MovieId);
-                var movies = context.Movies.Where(m => ids.Contains(m.MovieId));
-                foreach (var movie in movies)
+                else
                 {
-                    Movies.Add(new MovieItemViewModel(movie.MovieId));
+                    foreach (var movie in context.Movies)
+                    {
+                        Movies.Add(new MovieItemViewModel(movie.MovieId));
+                    }
                 }
             }
         }
@@ -393,6 +416,97 @@ namespace XMovie.ViewModels
                                       .FirstOrDefault();
                 }
                 return tag;
+            }
+        }
+
+        private void AddDirectoryMonitor(string path)
+        {
+            var normalizedPath = Util.NormalizePath(path);
+            var paths = Settings.DirectoryMonitors.Select(dm => Util.NormalizePath(dm.Path)).ToList();
+            if (paths.Contains(normalizedPath))
+            {
+                logger.Information($"{path}は監視ディレクトリとして登録済みです。");
+            }
+            else
+            {
+                logger.Information($"{path}を監視ディレクトリとして追加しました(設定画面から解除できます)。");
+                var monitorSetting = new DirectoryMonitorSettings() { Path = path };
+                Settings.DirectoryMonitors.Add(monitorSetting);
+
+                CheckDirectory(monitorSetting);
+            }
+        }
+
+        private void CheckDirectory(DirectoryMonitorSettings monitorSetting)
+        {
+            Task.Run(async () =>
+            {
+                var option = monitorSetting.IsRecursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+
+                var files = Directory.EnumerateFiles(monitorSetting.Path, "*", option);
+                var exts = Settings.GetImportableMovieExtensions();
+                foreach (var file in files)
+                {
+                    if (isShutdown)
+                    {
+                        break;
+                    }
+                    if (exts.Contains(Path.GetExtension(file).ToLower())) {
+                        await movieDispatcher.ImportMovie(file, Movies);
+                    }
+                }
+            });
+        }
+
+        private void ChangeMovieName(string oldPath, string path)
+        {
+            using (var context = new XMovieContext())
+            {
+                var movies = context.Movies.ToList();
+                var movie = movies.Where(m => Util.IsEqualsNormalizedPath(oldPath, m.Path)).FirstOrDefault();
+                if (movie != null)
+                {
+                    movie.Path = path;
+                    var model = Movies.Where(m => m.MovieId == movie.MovieId).FirstOrDefault();
+                    if (model != null)
+                    {
+                        model.Path = path;
+                    }
+                    context.SaveChanges();
+                }
+            }
+        }
+
+        private void Monitor_MovieNameChanged(string oldPath, string path)
+        {
+            ChangeMovieName(oldPath, path);
+        }
+
+        private async void Monitor_MovieAdded(string path)
+        {
+            await movieDispatcher.ImportMovie(path, Movies);
+        }
+
+        private async void Monitor_MovieRemoved(string path)
+        {
+            List<string> movieIds = null;
+            using (var context = new XMovieContext())
+            {
+                var list = context.Movies.Select(m => new { m.Path, m.MovieId }).ToList();
+                movieIds = list.Where(tmp => Util.IsEqualsNormalizedPath(tmp.Path, path))
+                               .Select(tmp => tmp.MovieId)
+                               .ToList();
+            }
+
+            if (movieIds.Count() > 0)
+            {
+                var model = Movies.Where(m => m.MovieId.Equals(movieIds.First())).FirstOrDefault();
+                if (model != null)
+                {
+                    System.Diagnostics.Debug.Print($"here {path}");
+                    model.IsEnabled = false;
+                    await movieDispatcher.UnregisterMovie(model.MovieId, Movies);
+                }
             }
         }
     }

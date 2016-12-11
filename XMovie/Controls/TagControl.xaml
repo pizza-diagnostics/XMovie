@@ -43,6 +43,7 @@
             </Grid>
 
             <ComboBox Grid.Row="1" x:Name="AddTagComboBox"
+                      ItemsSource="{Binding CategoryTags}"
                       Margin="0,5" IsEditable="True" IsEnabled="{Binding EnableTagEdit}"
                       metro:TextBoxHelper.ClearTextButton="True" Text="{Binding AddTagText}">
 

@@ -27,10 +27,7 @@ namespace XMovie.ViewModels
         public string CategoryName
         {
             get { return this.categoryName; }
-            set
-            {
-                SetProperty(ref categoryName, value, "CategoryName");
-            }
+            set { SetProperty(ref categoryName, value, "CategoryName"); }
         }
 
         public int TagCategoryId { get; set; }
@@ -38,6 +35,16 @@ namespace XMovie.ViewModels
         #endregion
 
         #region Tags
+
+        private void UpdateCategoryTags()
+        {
+            using (var context = new XMovieContext())
+            {
+                var tags = context.Tags.Where(t => t.TagCategoryId == TagCategoryId).Select(t => t.Name).ToList();
+                CategoryTags = new ObservableCollection<string>(tags);
+            }
+
+        }
 
         private void UpdateSelectedMovieTags()
         {
@@ -82,12 +89,16 @@ group by
         public ObservableCollection<Tag> Tags
         {
             get { return tags; }
-            set
-            {
-                SetProperty(ref tags, value, "Tags");
-            }
+            set { SetProperty(ref tags, value, "Tags"); }
         }
 
+        private ObservableCollection<string> categoryTags;
+        public ObservableCollection<string> CategoryTags
+        {
+            get { return categoryTags; }
+            set { SetProperty(ref categoryTags, value, "CategoryTags"); }
+
+        }
 
         private bool enableTagEdit = false;
         public bool EnableTagEdit
@@ -140,6 +151,7 @@ group by
                         }
 
                         UpdateSelectedMovieTags();
+                        UpdateCategoryTags();
                         AddTagText = ""; // inputのクリア 
                     });
                 }
