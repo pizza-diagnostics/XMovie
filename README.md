@@ -2,7 +2,7 @@
 
 ## これは何？
 
-動画のタグ管理を隠れ蓑にした、C#/WPF/EntityFramework/sqlの学習結果アウトプットです。
+動画のタグ管理を隠れ蓑にした、C#/WPF/EntityFramework/MVVM/sqlの学習結果アウトプットです。
 
 ## 依存
 
@@ -28,6 +28,9 @@ var arg = $"-ss {seconds} -i \"{moviePath}\" -vf scale=160:-1 -f image2 -an -y -
 
 ### mahapps.metro
 [mahapps.metro](http://mahapps.com/)を使用しています。なんか恰好良かったので。
+
+### Windows7APICodePack
+NuGetより
 
 ## 参考
 * アプリケーション
