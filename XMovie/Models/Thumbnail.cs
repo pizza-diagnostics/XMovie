@@ -19,7 +19,7 @@ namespace XMovie.Models
         [Required]
         public string FileName { get; set; }
 
-        public int Seconds { get; set; }
+        public double Seconds { get; set; }
 
         [ForeignKey("MovieId")]
         public virtual Movie Movie { get; set; }

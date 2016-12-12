@@ -84,7 +84,9 @@ namespace XMovie.ViewModels
                 {
                     addMovieExtensionCommand = new RelayCommand((param) =>
                     {
-                        if (!CustomMovieExtensions.ToList().Exists(e => e.Ext.Equals(NewMovieExtension)))
+                        var ext = NewMovieExtension.ToLower();
+                        if (!DefaultMovieExtensions.ToList().Exists(e => e.Ext.ToLower().Equals(ext)) &&
+                            !CustomMovieExtensions.ToList().Exists(e => e.Ext.ToLower().Equals(ext)))
                         {
                             CustomMovieExtensions.Add(new FileExtensionSettings()
                             {

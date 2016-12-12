@@ -225,41 +225,6 @@
                     </GroupBox>
                         
                 </Grid>
-            <!--
-                <ListView ItemsSource="{Binding Path=MovieExtensions}">
-                    <ListView.View>
-                        <GridView>
-                            <GridViewColumn Header="有効" Width="40">
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <CheckBox IsChecked="{Binding Path=IsEnabled}" />
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-                            <GridViewColumn Header="拡張子" Width="100">
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding Path=Ext}" />
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-                            <GridViewColumn Width="40">
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Button Visibility="{Binding}">
-                                            <Rectangle Width="10" Height="10" >
-                                                <Rectangle.Fill>
-                                                    <VisualBrush Stretch="Fill" Visual="{StaticResource appbar_close}" />
-                                                </Rectangle.Fill>
-                                            </Rectangle>
-                                        </Button>
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-                        </GridView>
-                    </ListView.View>
-                </ListView>
-                -->
             </TabItem>
         </TabControl>
         <Grid Grid.Row="1" Margin="5">

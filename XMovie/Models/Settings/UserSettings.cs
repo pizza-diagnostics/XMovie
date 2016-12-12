@@ -32,6 +32,8 @@ namespace XMovie.Models.Settings
         public int MainWindowLeft { get; set; } = 100;
         public WindowState MainWindowState { get; set; } = WindowState.Normal;
 
+        public int SorterIndex { get; set; } = 0;
+
         public bool IsFileSearch { get; set; } = false;
         public ObservableCollection<string> SearchHistories { get; set; }
             = new ObservableCollection<string>();

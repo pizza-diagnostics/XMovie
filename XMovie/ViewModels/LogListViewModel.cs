@@ -13,6 +13,10 @@ namespace XMovie.ViewModels
         public void LogViewLoaded()
         {
             Logger.Instace.LogEvent += Logger_LogEvent;
+            System.Windows.Threading.Dispatcher.CurrentDispatcher.ShutdownStarted += (s, e) =>
+            {
+                Logger.Instace.LogEvent -= Logger_LogEvent;
+            };
         }
 
         private void Logger_LogEvent(LogRecord record)
@@ -20,7 +24,13 @@ namespace XMovie.ViewModels
             App.Current.Dispatcher.Invoke(() =>
             {
                 LogRecords.Add(record);
+                OnPropertyChanged("LastLogSummary");
             });
+        }
+
+        public string LastLogSummary
+        {
+            get { return LogRecords.LastOrDefault()?.MessageSummary; }
         }
     }
 }

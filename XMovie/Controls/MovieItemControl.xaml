@@ -32,36 +32,46 @@
                 <ContextMenu Padding="10">
                     <ContextMenu.Resources>
                         <ResourceDictionary>
-                            <VisualBrush x:Key="FileNameChangeIcon" Visual="{StaticResource appbar_interface_textbox}" />
-                            <VisualBrush x:Key="FileMoveIcon" Visual="{StaticResource appbar_edit_box}" />
-                            <VisualBrush x:Key="FileDeleteIcon" Visual="{StaticResource appbar_delete}" />
-                            <VisualBrush x:Key="FolderOpenIcon" Visual="{StaticResource appbar_folder_open}" />
+                            <VisualBrush x:Key="ThumbnailIcon" Visual="{StaticResource appbar_image}" Stretch="Uniform"/>
+                            <VisualBrush x:Key="FileNameChangeIcon" Visual="{StaticResource appbar_interface_textbox}" Stretch="Uniform"/>
+                            <VisualBrush x:Key="FileMoveIcon" Visual="{StaticResource appbar_edit_box}" Stretch="Uniform"/>
+                            <VisualBrush x:Key="FileDeleteIcon" Visual="{StaticResource appbar_delete}" Stretch="Uniform"/>
+                            <VisualBrush x:Key="FolderOpenIcon" Visual="{StaticResource appbar_folder_open}" Stretch="Uniform"/>
                         </ResourceDictionary>
                     </ContextMenu.Resources>
+                    <MenuItem Header="サムネイル再生成"
+                              Command="{Binding UpdateThumbnailCommand}"
+                              CommandParameter="{Binding}">
+                        <MenuItem.Icon>
+                            <Rectangle Width="20" Height="20" Fill="{StaticResource ThumbnailIcon}" />
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <Separator />
                     <MenuItem Header="登録解除" 
                               Command="{Binding Path=PlacementTarget.Tag.UnregisterMovieCommand,RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ContextMenu}}"
                               CommandParameter="{Binding}"
                               >
                     </MenuItem>
+                    <MenuItem Header="ファイル名変更"
+                              Command="{Binding BeginRenameCommand}" >
+                        <MenuItem.Icon>
+                            <Rectangle Width="20" Height="20" Fill="{StaticResource FileNameChangeIcon}" />
+                        </MenuItem.Icon>
+                    </MenuItem>
                     <MenuItem Header="ファイル移動"
                               Command="{Binding Path=PlacementTarget.Tag.MoveMovieCommand,RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ContextMenu}}"
                               CommandParameter="{Binding}"
                               >
-                        <MenuItem.Icon>
-                            <Rectangle Width="16" Height="16" Fill="{StaticResource FileMoveIcon}" />
-                        </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="ファイル名変更"
-                              Command="{Binding BeginRenameCommand}" >
+                    <MenuItem Header="ファイル削除"
+                              Command="{Binding Path=PlacementTarget.Tag.RemoveMovieCommand,RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ContextMenu}}"
+                              CommandParameter="{Binding}">
                         
-                        <MenuItem.Icon>
-                            <Rectangle Width="16" Height="16" Fill="{StaticResource FileNameChangeIcon}" />
-                        </MenuItem.Icon>
                     </MenuItem>
                     <Separator />
                     <MenuItem Header="動画フォルダを開く" Command="{Binding OpenMovieDirectoryCommand}">
                         <MenuItem.Icon>
-                            <Rectangle Width="16" Height="16" Fill="{StaticResource FolderOpenIcon}" />
+                            <Rectangle Width="20" Height="20" Fill="{StaticResource FolderOpenIcon}" />
                         </MenuItem.Icon>
                     </MenuItem>
 
@@ -69,11 +79,13 @@
             </Grid.ContextMenu>
             
             <Grid>
-                <Image Stretch="Uniform" Source="{Binding Path=ThumbnailImage}"
-                       Height="{Binding Path=ThumbnailHeight}"
-                       Width="{Binding Path=ThumbnailWidth}"
-                       HorizontalAlignment="Center"
-                       VerticalAlignment="Center"/>
+                <Border Background="Black">
+                    <Image Stretch="Uniform" Source="{Binding Path=ThumbnailImage}"
+                           Height="{Binding Path=ThumbnailHeight}"
+                           Width="{Binding Path=ThumbnailWidth}"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"/>
+                </Border>
 
                 <Grid Background="#6C000000" Height="20" VerticalAlignment="Top">
                     <Grid.Resources>

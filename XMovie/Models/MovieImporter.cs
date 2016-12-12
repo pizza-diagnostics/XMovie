@@ -119,20 +119,29 @@ namespace XMovie.Models
                     ex, MovieImporterException.Error.CannotReadFile);
             }
 
-            var duration = GetMovieDuration(path);
-            logger.Debug($"{path} Duration: {duration}, md5sum: {movie.MD5Sum}");
+            UpdateMovieThumbnails(path, Util.MovieThumbnailDirectory, movie);
+
+            return movie;
+        }
+
+        public void UpdateMovieThumbnails(string moviePath, string thumbnailDirectory, Movie movie)
+        {
+            var duration = GetMovieDuration(moviePath);
+            logger.Debug($"{moviePath} Duration: {duration}, md5sum: {movie.MD5Sum}");
 
             // 1ファイルにつき5枚のサムネイルを作成する
-            var step = (int)duration / 6; // TODO: サムネイル作成の時間間隔設定方法
+
+            var step = duration / 6;
+            var offset = duration >= 20 ? 5 : 0;
             for (var i = 0; i < 5; i++)
             {
-                var seconds = 10 + (i * step);
+                var seconds = offset + (i * step);
                 var fileName = $"{movie.MovieId}_{i + 1, 0:D3}.jpg";
-                var thumbnailPath = Path.Combine(Util.MovieThumbnailDirectory, fileName);
+                var thumbnailPath = Path.Combine(thumbnailDirectory, fileName);
                 Thumbnail thumbnail = null;
                 try
                 {
-                    thumbnail = CreateMovieThumbnails(path, thumbnailPath, seconds);
+                    thumbnail = CreateMovieThumbnails(moviePath, thumbnailPath, seconds);
                 }
                 catch (Exception ex)
                 {
@@ -155,10 +164,10 @@ namespace XMovie.Models
                     movie.Thumbnails.Add(thumbnail);
                 }
             }
-            return movie;
+
         }
 
-        public Thumbnail CreateMovieThumbnails(string moviePath, string thumbnailPath, int seconds)
+        private Thumbnail CreateMovieThumbnails(string moviePath, string thumbnailPath, double seconds)
         {
             // TODO: 動画以外の扱いをどうするか
             var arg = $"-ss {seconds} -i \"{moviePath}\" -vf scale=160:-1 -f image2 -an -y -vframes 1 \"{thumbnailPath}\"";

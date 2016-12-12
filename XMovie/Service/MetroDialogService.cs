@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using MahApps.Metro.Controls.Dialogs;
 using MahApps.Metro.Controls;
-using System.Windows;
+using Microsoft.WindowsAPICodePack.Dialogs;
 
 namespace XMovie.Service
 {
@@ -28,6 +29,33 @@ namespace XMovie.Service
         {
             var window = new SettingWindow();
             window.ShowDialog();
+        }
+
+        public string ShowFolderDialog(string title, string basePath)
+        {
+            var dlg = new CommonOpenFileDialog();
+            dlg.Title = title;
+            dlg.InitialDirectory = basePath;
+
+            dlg.IsFolderPicker = true;
+            dlg.AddToMostRecentlyUsedList = false;
+            dlg.AllowNonFileSystemItems = false;
+            dlg.DefaultDirectory = basePath;
+            dlg.EnsureFileExists = true;
+            dlg.EnsurePathExists = true;
+            dlg.EnsureReadOnly = false;
+            dlg.EnsureValidNames = true;
+            dlg.Multiselect = false;
+            dlg.ShowPlacesList = true;
+
+            if (dlg.ShowDialog() == CommonFileDialogResult.Ok)
+            {
+                return dlg.FileName;
+            }
+            else
+            {
+                return null;
+            }
         }
     }
 }

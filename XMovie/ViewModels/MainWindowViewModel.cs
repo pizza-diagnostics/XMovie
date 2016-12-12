@@ -19,13 +19,13 @@ namespace XMovie.ViewModels
         private Logger logger = Logger.Instace;
 
         public ObservableCollection<MovieItemViewModel> Movies { get; private set; }
+            = new ObservableCollection<MovieItemViewModel>();
 
         public MovieInformationViewModel MovieInformation { get; private set; }
 
         public LogListViewModel Logs { get; private set; } = new LogListViewModel();
 
         private IDialogService dialogService;
-        private DirectoryMonitor monitor;
         private MovieDispatcher movieDispatcher = new MovieDispatcher();
 
         private volatile bool isShutdown = false;
@@ -37,17 +37,6 @@ namespace XMovie.ViewModels
 
             Application.Current.Dispatcher.ShutdownStarted += (s, e) => { isShutdown = true; };
 
-            using (var context = new XMovieContext())
-            {
-                // TODO: ViewModelの渡し方が違う？
-                // TODO: Backgroundでやらないと
-                Movies = new ObservableCollection<MovieItemViewModel>();
-                foreach (var movie in context.Movies)
-                {
-                    Movies.Add(new MovieItemViewModel(movie.MovieId));
-                }
-            }
-
             Settings = UserSettingManager.Instance.GetUserSettings();
             Settings.ThumbnailCountChanged += ((sender, count) =>
             {
@@ -56,6 +45,8 @@ namespace XMovie.ViewModels
                     movieModel.ThumbnailCount = count;
                 }
             });
+
+            SearchMovies("");
 
             var monitor = DirectoryMonitor.Instance;
             monitor.MovieRemoved += Monitor_MovieRemoved;
@@ -108,6 +99,31 @@ namespace XMovie.ViewModels
                     "Thumbnail 4x1",
                     "Thumbnail 5x1",
                 });
+            }
+        }
+
+        private List<SortDescriptor> sorter;
+        public List<SortDescriptor> Sorter
+        {
+            get
+            {
+                if (sorter == null)
+                {
+                    sorter = new List<SortDescriptor>(new SortDescriptor[]
+                    {
+                        new SortDescriptor<int>() { Title = "再生回数昇順", IsAsc = true, MovieSortFunc = (m => m.PlayCount) },
+                        new SortDescriptor<int>() { Title = "再生回数降順", IsAsc = false, MovieSortFunc = (m => m.PlayCount) },
+                        new SortDescriptor<int>() { Title = "ランク昇順", IsAsc = true, MovieSortFunc = (m => m.Rank) },
+                        new SortDescriptor<int>() { Title = "ランク降順", IsAsc = false, MovieSortFunc = (m => m.Rank) },
+                        new SortDescriptor<DateTime>() { Title = "登録日時昇順", IsAsc = true, MovieSortFunc = (m => m.RegisteredDate) },
+                        new SortDescriptor<DateTime>() { Title = "登録日時降順", IsAsc = false, MovieSortFunc = (m => m.RegisteredDate) },
+                        new SortDescriptor<DateTime>() { Title = "ファイル作成日時昇順", IsAsc = true, MovieSortFunc = (m => m.FileCreateDate) },
+                        new SortDescriptor<DateTime>() { Title = "ファイル作成日時降順", IsAsc = false, MovieSortFunc = (m => m.FileCreateDate) },
+                        new SortDescriptor<DateTime>() { Title = "ファイル更新日時昇順", IsAsc = true, MovieSortFunc = (m => m.FileModifiedDate) },
+                        new SortDescriptor<DateTime>() { Title = "ファイル更新日時降順", IsAsc = false, MovieSortFunc = (m => m.FileModifiedDate) },
+                    });
+                }
+                return sorter;
             }
         }
 
@@ -291,12 +307,103 @@ namespace XMovie.ViewModels
                         MovieItemViewModel movie = (MovieItemViewModel)param;
                         movie.IsEnabled = false;
                         await movieDispatcher.UnregisterMovie(movie.MovieId, Movies);
+                        foreach (MovieItemViewModel m in MovieInformation.SelectedMovies)
+                        {
+                            m.IsEnabled = false;
+                            await movieDispatcher.UnregisterMovie(m.MovieId, Movies);
+                        }
+
                     });
                 }
                 return unregisterMovieCommand;
             }
         }
 
+        private ICommand moveMovieCommand;
+        public ICommand MoveMovieCommand
+        {
+            get
+            {
+                if (moveMovieCommand == null)
+                {
+                    moveMovieCommand = new RelayCommand((param) =>
+                    {
+                        var model = (MovieItemViewModel)param;
+                        var dest = dialogService.ShowFolderDialog("移動先フォルダの選択", Path.GetDirectoryName(model.Path));
+                        if (dest == null)
+                        {
+                            return;
+                        }
+                        try
+                        {
+                            dest = Path.Combine(dest, model.FileName);
+                            DirectoryMonitor.Instance.PauseMonitor();
+                            File.Move(model.Path, dest);
+                            logger.Information($"ファイルを移動しました。{model.Path} -> {dest}");
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.Error(ex);
+                            return;
+                        }
+                        finally
+                        {
+                            DirectoryMonitor.Instance.ResumeMonitor();
+                        }
+
+                        model.Path = dest;
+                        using (var context = new XMovieContext())
+                        {
+                            var movie = context.Movies.Where(m => m.MovieId == model.MovieId).FirstOrDefault();
+                            if (movie != null)
+                            {
+                                movie.Path = dest;
+                            }
+                            context.SaveChanges();
+                        }
+                    });
+                }
+                return moveMovieCommand;
+            }
+        }
+
+        private ICommand removeMovieCommand;
+        public ICommand RemoveMovieCommand
+        {
+            get
+            {
+                if (removeMovieCommand == null)
+                {
+                    removeMovieCommand = new RelayCommand(async (param) =>
+                    {
+                        var model = (MovieItemViewModel)param;
+                        var msg = $"{model.Path}を削除しますか?\n(ファイルは完全に削除されます。)";
+                        if (await dialogService.ShowConfirmDialog("ファイルの削除", msg))
+                        {
+                            model.IsEnabled = false;
+                            await movieDispatcher.UnregisterMovie(model.MovieId, Movies);
+                            try
+                            {
+                                DirectoryMonitor.Instance.PauseMonitor();
+                                File.Delete(model.Path);
+                                logger.Information($"ファイルを削除しました。{model.Path}");
+                            }
+                            catch (Exception ex)
+                            {
+                                logger.Error($"ファイルが削除できませんでした。{model.Path}");
+                                logger.Error(ex);
+                                return;
+                            }
+                            finally
+                            {
+                                DirectoryMonitor.Instance.ResumeMonitor();
+                            }
+                        }
+                    });
+                }
+                return removeMovieCommand;
+            }
+        }
         #endregion
 
         private void StartMonitor()
@@ -311,6 +418,10 @@ namespace XMovie.ViewModels
             monitor.StartMonitor(Settings.DirectoryMonitors, exts);
         }
 
+        public string SearchKeywords
+        {
+            get { return Settings.SearchHistories.Count > 0 ? Settings.SearchHistories[0] : ""; }
+        }
 
         private void AddSearchHistory(string keywords)
         {
@@ -326,6 +437,7 @@ namespace XMovie.ViewModels
                     Settings.SearchHistories.RemoveAt(Settings.SearchHistories.Count - 1);
                 }
             }
+            OnPropertyChanged("SearchKeywords");
         }
 
         private void SearchMovies(string keywords)
@@ -333,18 +445,45 @@ namespace XMovie.ViewModels
             // 検索歴の追加
             AddSearchHistory(keywords);
 
-            var keys = new List<string>(keywords.Split(new char[] { ',', ' ', '　', '、' }, StringSplitOptions.RemoveEmptyEntries));
-            if (Settings.IsFileSearch)
+            var sort = Sorter[Settings.SorterIndex];
+            if ("cmd:duplicate".Equals(keywords))
             {
-                SearchMoviesWithPath(keys);
+                SearchDuplicateMovies(sort);
             }
             else
             {
-                SearchMoviesWithTags(keys);
+                var keys = new List<string>(keywords.Split(new char[] { ',', ' ', '　', '、' }, StringSplitOptions.RemoveEmptyEntries));
+
+                if (Settings.IsFileSearch)
+                {
+                    SearchMoviesWithPath(keys, sort);
+                }
+                else
+                {
+                    SearchMoviesWithTags(keys, sort);
+                }
+            }
+
+        }
+
+        private void SearchDuplicateMovies(SortDescriptor sort)
+        {
+            using (var context = new XMovieContext())
+            {
+                Movies.Clear();
+                var md5list = from m in context.Movies
+                              group m by m.MD5Sum into grouped
+                              where grouped.Count() > 1
+                              select grouped.Key;
+                var movies = sort.MovieSort(context.Movies.Where(m => md5list.Contains(m.MD5Sum)));
+                foreach (var movie in movies)
+                {
+                    Movies.Add(new MovieItemViewModel(movie.MovieId));
+                }
             }
         }
 
-        private void SearchMoviesWithTags(List<string> tagKeys)
+        private void SearchMoviesWithTags(List<string> tagKeys, SortDescriptor sort)
         {
             using (var context = new XMovieContext())
             {
@@ -357,7 +496,7 @@ namespace XMovie.ViewModels
                         query = query.Where(tmp => tmp.Name.Contains(tag));
                     }
                     var ids = query.Select(tmp => tmp.MovieId).ToList();
-                    var movies = context.Movies.Where(m => ids.Contains(m.MovieId));
+                    var movies = sort.MovieSort(context.Movies.Where(m => ids.Contains(m.MovieId)));
                     foreach (var movie in movies)
                     {
                         Movies.Add(new MovieItemViewModel(movie.MovieId));
@@ -365,7 +504,7 @@ namespace XMovie.ViewModels
                 }
                 else
                 {
-                    foreach (var movie in context.Movies)
+                    foreach (var movie in sort.MovieSort(context.Movies))
                     {
                         Movies.Add(new MovieItemViewModel(movie.MovieId));
                     }
@@ -373,7 +512,7 @@ namespace XMovie.ViewModels
             }
         }
 
-        private void SearchMoviesWithPath(List<string> pathKeys)
+        private void SearchMoviesWithPath(List<string> pathKeys, SortDescriptor sort)
         {
             using (var context = new XMovieContext())
             {
@@ -384,6 +523,7 @@ namespace XMovie.ViewModels
                 {
                     query = query.Where(m => m.Path.Contains(path));
                 }
+                query = sort.MovieSort(query);
                 var movies = query.ToList<Movie>();
                 foreach (var movie in movies)
                 {
@@ -431,7 +571,10 @@ namespace XMovie.ViewModels
             {
                 logger.Information($"{path}を監視ディレクトリとして追加しました(設定画面から解除できます)。");
                 var monitorSetting = new DirectoryMonitorSettings() { Path = path };
-                Settings.DirectoryMonitors.Add(monitorSetting);
+                App.Current.Dispatcher.Invoke(() =>
+                {
+                    Settings.DirectoryMonitors.Add(monitorSetting);
+                });
 
                 CheckDirectory(monitorSetting);
             }
@@ -503,7 +646,6 @@ namespace XMovie.ViewModels
                 var model = Movies.Where(m => m.MovieId.Equals(movieIds.First())).FirstOrDefault();
                 if (model != null)
                 {
-                    System.Diagnostics.Debug.Print($"here {path}");
                     model.IsEnabled = false;
                     await movieDispatcher.UnregisterMovie(model.MovieId, Movies);
                 }

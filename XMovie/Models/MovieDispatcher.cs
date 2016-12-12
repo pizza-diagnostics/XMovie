@@ -17,6 +17,8 @@ namespace XMovie.Models
         private Dispatcher dispatcher;
         private Logger logger = Logger.Instace;
 
+        private volatile bool isShutdown = false;
+
         public MovieDispatcher()
         {
             var source = new TaskCompletionSource<Dispatcher>();
@@ -31,6 +33,7 @@ namespace XMovie.Models
 
             Dispatcher.CurrentDispatcher.ShutdownStarted += (s, e) =>
             {
+                isShutdown = true;
                 dispatcher.BeginInvokeShutdown(DispatcherPriority.Normal);
             };
         }
@@ -41,24 +44,36 @@ namespace XMovie.Models
             {
                 try
                 {
+                    if (App.Current == null)
+                    {
+                        return;
+                    }
                     var importer = new MovieImporter();
                     var movie = importer.Import(path);
-                    if (movie == null)
+                    if (movie == null || isShutdown)
                     {
                         return;
                     }
                     App.Current.Dispatcher.Invoke(() =>
                     {
-                        using (var context = new XMovieContext())
+                        try
                         {
-                            context.Movies.Add(movie);
-                            foreach (var thumbnail in movie.Thumbnails)
+
+                            using (var context = new XMovieContext())
                             {
-                                context.Thumbnails.Add(thumbnail);
+                                context.Movies.Add(movie);
+                                foreach (var thumbnail in movie.Thumbnails)
+                                {
+                                    context.Thumbnails.Add(thumbnail);
+                                }
+                                context.SaveChanges();
                             }
-                            context.SaveChanges();
+                            movieCollection.Add(new MovieItemViewModel(movie.MovieId));
                         }
-                        movieCollection.Add(new MovieItemViewModel(movie.MovieId));
+                        catch (Exception ex)
+                        {
+                            logger.Error(ex);
+                        }
                     });
                 }
                 catch (MovieImporterException ex)
@@ -72,8 +87,6 @@ namespace XMovie.Models
                         logger.Error(ex);
                     }
                 }
-
-
             });
         }
 

@@ -147,39 +147,64 @@ namespace XMovie.ViewModels
         {
             get
             {
-                using (var context = new XMovieContext())
+                try
                 {
-                    var thumbnails = context.Thumbnails.Where(t => t.MovieId.Equals(MovieId)).ToArray();
-                    if (thumbnails == null || thumbnails.Count() == 0)
-                       return null;
-                    var visual = new DrawingVisual();
-                    var x = 0;
-                    var y = 0;
-                    using (var dc = visual.RenderOpen())
+                    using (var context = new XMovieContext())
                     {
-                        foreach (var item in thumbnails.Select((t, i) => new { t, i }))
+                        var thumbnails = context.Thumbnails
+                                                .Where(t => t.MovieId.Equals(MovieId))
+                                                .OrderBy(t => t.Seconds)
+                                                .ToArray();
+                        if (thumbnails == null || thumbnails.Count() == 0)
+                           return null;
+                        var visual = new DrawingVisual();
+                        var x = 0;
+                        var y = 0;
+                        using (var dc = visual.RenderOpen())
                         {
-                            if (item.i >= thumbnailCount)
+                            foreach (var item in thumbnails.Select((t, i) => new { t, i }))
                             {
-                                break;
-                            }
+                                if (item.i >= thumbnailCount)
+                                {
+                                    break;
+                                }
 
-                            BitmapSource bitmapImage;
-                            using (var stream = new FileStream(item.t.Path, FileMode.Open, FileAccess.Read))
-                            {
-                                var decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
-                                bitmapImage = decoder.Frames[0];
-                            }
+                                BitmapSource bitmapImage;
+                                if (File.Exists(item.t.Path))
+                                {
+                                    using (var stream = new FileStream(item.t.Path, FileMode.Open, FileAccess.Read))
+                                    {
+                                        var decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+                                        bitmapImage = decoder.Frames[0];
+                                    }
 
-                            dc.DrawImage(bitmapImage, new Rect(x, 0, bitmapImage.PixelWidth, bitmapImage.PixelHeight));
-                            y = bitmapImage.PixelHeight; // 固定
-                            x += bitmapImage.PixelWidth;
+                                    dc.DrawImage(bitmapImage, new Rect(x, 0, bitmapImage.PixelWidth, bitmapImage.PixelHeight));
+                                    y = bitmapImage.PixelHeight; // 固定
+                                    x += bitmapImage.PixelWidth;
+                                }
+                                else
+                                {
+                                    logger.Error($"サムネイル画像が見つかりません。{item.t.Path}");
+                                }
+                            }
                         }
-                    }
-                    var bitmap = new RenderTargetBitmap(x, y, 96, 96, PixelFormats.Pbgra32);
-                    bitmap.Render(visual);
+                        if (x > 0 && y > 0)
+                        {
+                            var bitmap = new RenderTargetBitmap(x, y, 96, 96, PixelFormats.Pbgra32);
+                            bitmap.Render(visual);
+                            return bitmap;
+                        }
+                        else
+                        {
+                            return null;
+                        }
 
-                    return bitmap;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex);
+                    return null;
                 }
             }
         }
@@ -385,7 +410,7 @@ namespace XMovie.ViewModels
                     {
                         try
                         {
-                            System.Diagnostics.Process.Start(System.IO.Path.GetDirectoryName(Path));
+                            System.Diagnostics.Process.Start("explorer.exe", $"/select, \"{Path}\"");
                         }
                         catch (Exception ex)
                         {
@@ -394,6 +419,39 @@ namespace XMovie.ViewModels
                     });
                 }
                 return openMovieDirectoryCommand;
+            }
+        }
+
+        private ICommand updateThumbnailCommand;
+        public ICommand UpdateThumbnailCommand
+        {
+            get
+            {
+                if (updateThumbnailCommand == null)
+                {
+                    updateThumbnailCommand = new RelayCommand((param) =>
+                    {
+                        var model = (MovieItemViewModel)param;
+                        model.IsEnabled = false;
+                        using (var context = new XMovieContext())
+                        {
+                            var movie = context.Movies.Where(m => m.MovieId == model.MovieId).FirstOrDefault();
+                            if (movie != null)
+                            {
+                                var thumbnails = context.Thumbnails.Where(t => t.MovieId == model.MovieId);
+                                context.Thumbnails.RemoveRange(thumbnails);
+                                movie.Thumbnails.Clear();
+
+                                var importer = new MovieImporter();
+                                importer.UpdateMovieThumbnails(movie.Path, Util.MovieThumbnailDirectory, movie);
+                                OnPropertyChanged("ThumbnailImage");
+                            }
+                            context.SaveChanges();
+                        }
+                        model.IsEnabled = true;
+                    });
+                }
+                return updateThumbnailCommand;
             }
         }
         #endregion
