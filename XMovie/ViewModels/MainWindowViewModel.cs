@@ -9,6 +9,7 @@ using System.Windows;
 using System.Windows.Input;
 using XMovie.Common;
 using XMovie.Models;
+using XMovie.Models.Repository;
 using XMovie.Models.Settings;
 using XMovie.Service;
 
@@ -111,16 +112,76 @@ namespace XMovie.ViewModels
                 {
                     sorter = new List<SortDescriptor>(new SortDescriptor[]
                     {
-                        new SortDescriptor<int>() { Title = "再生回数昇順", IsAsc = true, MovieSortFunc = (m => m.PlayCount) },
-                        new SortDescriptor<int>() { Title = "再生回数降順", IsAsc = false, MovieSortFunc = (m => m.PlayCount) },
-                        new SortDescriptor<int>() { Title = "ランク昇順", IsAsc = true, MovieSortFunc = (m => m.Rank) },
-                        new SortDescriptor<int>() { Title = "ランク降順", IsAsc = false, MovieSortFunc = (m => m.Rank) },
-                        new SortDescriptor<DateTime>() { Title = "登録日時昇順", IsAsc = true, MovieSortFunc = (m => m.RegisteredDate) },
-                        new SortDescriptor<DateTime>() { Title = "登録日時降順", IsAsc = false, MovieSortFunc = (m => m.RegisteredDate) },
-                        new SortDescriptor<DateTime>() { Title = "ファイル作成日時昇順", IsAsc = true, MovieSortFunc = (m => m.FileCreateDate) },
-                        new SortDescriptor<DateTime>() { Title = "ファイル作成日時降順", IsAsc = false, MovieSortFunc = (m => m.FileCreateDate) },
-                        new SortDescriptor<DateTime>() { Title = "ファイル更新日時昇順", IsAsc = true, MovieSortFunc = (m => m.FileModifiedDate) },
-                        new SortDescriptor<DateTime>() { Title = "ファイル更新日時降順", IsAsc = false, MovieSortFunc = (m => m.FileModifiedDate) },
+                        new SortDescriptor<int>()
+                        {
+                            Title = "再生回数昇順",
+                            IsAsc = true,
+                            Column = "PlayCount",
+                            MovieSortFunc = (m => m.PlayCount)
+                        },
+                        new SortDescriptor<int>()
+                        {
+                            Title = "再生回数降順",
+                            IsAsc = false,
+                            Column = "PlayCount",
+                            MovieSortFunc = (m => m.PlayCount)
+                        },
+                        new SortDescriptor<int>()
+                        {
+                            Title = "ランク昇順",
+                            IsAsc = true,
+                            Column = "Rank",
+                            MovieSortFunc = (m => m.Rank)
+                        },
+                        new SortDescriptor<int>()
+                        {
+                            Title = "ランク降順",
+                            IsAsc = false,
+                            Column = "Rank",
+                            MovieSortFunc = (m => m.Rank)
+                        },
+                        new SortDescriptor<DateTime>()
+                        {
+                            Title = "登録日時昇順",
+                            IsAsc = true,
+                            Column = "RegisteredDate",
+                            MovieSortFunc = (m => m.RegisteredDate)
+                        },
+                        new SortDescriptor<DateTime>()
+                        {
+                            Title = "登録日時降順",
+                            IsAsc = false,
+                            Column = "RegisteredDate",
+                            MovieSortFunc = (m => m.RegisteredDate)
+                        },
+                        new SortDescriptor<DateTime>()
+                        {
+                            Title = "ファイル作成日時昇順",
+                            IsAsc = true,
+                            Column = "FileCreateDate",
+                            MovieSortFunc = (m => m.FileCreateDate)
+                        },
+                        new SortDescriptor<DateTime>()
+                        {
+                            Title = "ファイル作成日時降順",
+                            IsAsc = false,
+                            Column = "FileCreateDate",
+                            MovieSortFunc = (m => m.FileCreateDate)
+                        },
+                        new SortDescriptor<DateTime>()
+                        {
+                            Title = "ファイル更新日時昇順",
+                            IsAsc = true,
+                            Column = "FileModifiedDate",
+                            MovieSortFunc = (m => m.FileModifiedDate)
+                        },
+                        new SortDescriptor<DateTime>()
+                        {
+                            Title = "ファイル更新日時降順",
+                            IsAsc = false,
+                            Column = "FileModifiedDate",
+                            MovieSortFunc = (m => m.FileModifiedDate)
+                        },
                     });
                 }
                 return sorter;
@@ -221,12 +282,14 @@ namespace XMovie.ViewModels
                     addTagCommand = new RelayCommand((param) =>
                     {
                         var tagParameter = (TagCommandParameter)param;
-                        var tag = InsertNewTag(tagParameter);
-
-                        MovieInformation.AddTagCommand.Execute(tag);
-                        foreach (MovieItemViewModel movie in MovieInformation.SelectedMovies)
+                        using (var repos = new RepositoryService())
                         {
-                            movie.AddTagCommand.Execute(tag);
+                            var tag = repos.InsertNewTag(tagParameter.Name, tagParameter.TagCategoryId);
+                            MovieInformation.AddTagCommand.Execute(tag);
+                            foreach (MovieItemViewModel movie in MovieInformation.SelectedMovies)
+                            {
+                                movie.AddTagCommand.Execute(tag);
+                            }
                         }
                     });
                 }
@@ -268,9 +331,13 @@ namespace XMovie.ViewModels
                         if (result)
                         {
                             MovieInformation.RemoveCategoryCommand.Execute(param);
-                            foreach (MovieItemViewModel movie in MovieInformation.SelectedMovies)
+                            if (MovieInformation.SelectedMovies != null)
                             {
-                                movie.UpdateTags();
+                                foreach (MovieItemViewModel movie in MovieInformation.SelectedMovies)
+                                {
+                                    movie.UpdateTags();
+                                }
+
                             }
                         }
                     });
@@ -352,15 +419,16 @@ namespace XMovie.ViewModels
                         }
 
                         model.Path = dest;
-                        using (var context = new XMovieContext())
+
+                        using (var repo = new RepositoryService())
                         {
-                            var movie = context.Movies.Where(m => m.MovieId == model.MovieId).FirstOrDefault();
-                            if (movie != null)
-                            {
-                                movie.Path = dest;
-                            }
-                            context.SaveChanges();
+                            repo.ApplyMovie(model.MovieId, (m => m.Path = dest));
                         }
+                        /*
+                        var movieRepository = new MovieRepository();
+                        movieRepository.UpdateMovie(model.MovieId, (m => m.Path = dest));
+                        */
+
                     });
                 }
                 return moveMovieCommand;
@@ -468,15 +536,10 @@ namespace XMovie.ViewModels
 
         private void SearchDuplicateMovies(SortDescriptor sort)
         {
-            using (var context = new XMovieContext())
+            Movies.Clear();
+            using (var repo = new RepositoryService())
             {
-                Movies.Clear();
-                var md5list = from m in context.Movies
-                              group m by m.MD5Sum into grouped
-                              where grouped.Count() > 1
-                              select grouped.Key;
-                var movies = sort.MovieSort(context.Movies.Where(m => md5list.Contains(m.MD5Sum)));
-                foreach (var movie in movies)
+                foreach (var movie in repo.FindDuplicateMovies(sort))
                 {
                     Movies.Add(new MovieItemViewModel(movie.MovieId));
                 }
@@ -485,46 +548,10 @@ namespace XMovie.ViewModels
 
         private void SearchMoviesWithTags(List<string> tagKeys, SortDescriptor sort)
         {
-            using (var context = new XMovieContext())
+            Movies.Clear();
+            using (var repos = new RepositoryService())
             {
-                Movies.Clear();
-                if (tagKeys.Count() > 0)
-                {
-                    var query = context.Tags.Join(context.TagMaps, t => t.TagId, tm => tm.TagId, (t, tm) => new { t.Name, tm.MovieId });
-                    foreach (var tag in tagKeys)
-                    {
-                        query = query.Where(tmp => tmp.Name.Contains(tag));
-                    }
-                    var ids = query.Select(tmp => tmp.MovieId).ToList();
-                    var movies = sort.MovieSort(context.Movies.Where(m => ids.Contains(m.MovieId)));
-                    foreach (var movie in movies)
-                    {
-                        Movies.Add(new MovieItemViewModel(movie.MovieId));
-                    }
-                }
-                else
-                {
-                    foreach (var movie in sort.MovieSort(context.Movies))
-                    {
-                        Movies.Add(new MovieItemViewModel(movie.MovieId));
-                    }
-                }
-            }
-        }
-
-        private void SearchMoviesWithPath(List<string> pathKeys, SortDescriptor sort)
-        {
-            using (var context = new XMovieContext())
-            {
-                Movies.Clear();
-                var query = context.Movies.Select(m => m);
-                // ファイル検索の場合はキーワードのlike and
-                foreach (var path in pathKeys)
-                {
-                    query = query.Where(m => m.Path.Contains(path));
-                }
-                query = sort.MovieSort(query);
-                var movies = query.ToList<Movie>();
+                var movies = repos.FindMoviesByTags(tagKeys, sort);
                 foreach (var movie in movies)
                 {
                     Movies.Add(new MovieItemViewModel(movie.MovieId));
@@ -532,30 +559,15 @@ namespace XMovie.ViewModels
             }
         }
 
-        private Tag InsertNewTag(TagCommandParameter tagParameter)
+        private void SearchMoviesWithPath(List<string> pathKeys, SortDescriptor sort)
         {
-            using (var context = new XMovieContext())
+            Movies.Clear();
+            using (var repo = new RepositoryService())
             {
-                // 1. 新規タグをマスタに追加
-                bool isExist = context.Tags.Any(t => t.Name.Equals(tagParameter.Name) && t.TagCategoryId == tagParameter.TagCategoryId);
-                Tag tag;
-                if (!isExist)
+                foreach (var movie in repo.FindMoviesByPathKeys(pathKeys, sort))
                 {
-                    tag = new Tag()
-                    {
-                        TagCategoryId = tagParameter.TagCategoryId,
-                        Name = tagParameter.Name
-                    };
-                    context.Tags.Add(tag);
-                    context.SaveChanges();
+                    Movies.Add(new MovieItemViewModel(movie.MovieId));
                 }
-                else
-                {
-                    tag = context.Tags.Where(t => t.TagCategoryId == tagParameter.TagCategoryId && t.Name.Equals(tagParameter.Name))
-                                      .Select(t => t)
-                                      .FirstOrDefault();
-                }
-                return tag;
             }
         }
 
@@ -603,19 +615,20 @@ namespace XMovie.ViewModels
 
         private void ChangeMovieName(string oldPath, string path)
         {
-            using (var context = new XMovieContext())
+            using (var repos = new RepositoryService())
             {
-                var movies = context.Movies.ToList();
-                var movie = movies.Where(m => Util.IsEqualsNormalizedPath(oldPath, m.Path)).FirstOrDefault();
+                var movie = repos.FindMovieAtPath(oldPath);
+
                 if (movie != null)
                 {
                     movie.Path = path;
+                    repos.UpdateMovie(movie);
+
                     var model = Movies.Where(m => m.MovieId == movie.MovieId).FirstOrDefault();
                     if (model != null)
                     {
                         model.Path = path;
                     }
-                    context.SaveChanges();
                 }
             }
         }
@@ -632,22 +645,17 @@ namespace XMovie.ViewModels
 
         private async void Monitor_MovieRemoved(string path)
         {
-            List<string> movieIds = null;
-            using (var context = new XMovieContext())
+            using (var repos = new RepositoryService())
             {
-                var list = context.Movies.Select(m => new { m.Path, m.MovieId }).ToList();
-                movieIds = list.Where(tmp => Util.IsEqualsNormalizedPath(tmp.Path, path))
-                               .Select(tmp => tmp.MovieId)
-                               .ToList();
-            }
-
-            if (movieIds.Count() > 0)
-            {
-                var model = Movies.Where(m => m.MovieId.Equals(movieIds.First())).FirstOrDefault();
-                if (model != null)
+                var movie = repos.FindMovieAtPath(path);
+                if (movie != null)
                 {
-                    model.IsEnabled = false;
-                    await movieDispatcher.UnregisterMovie(model.MovieId, Movies);
+                    var model = Movies.Where(m => m.MovieId.Equals(movie.MovieId)).FirstOrDefault();
+                    if (model != null)
+                    {
+                        model.IsEnabled = false;
+                        await movieDispatcher.UnregisterMovie(model.MovieId, Movies);
+                    }
                 }
             }
         }

@@ -142,7 +142,7 @@
 
                     <i:Interaction.Behaviors>
                         <behaviors:FileDropBehavior DropCommand="{Binding FileDropCommand}"/>
-                        <behaviors:ListBoxSelectedItemsBehavior SelectedItems="{Binding MovieInformation.SelectedMovies,Mode=OneWayToSource}" />
+                        <behaviors:ListBoxSelectedMovieItemsBehavior SelectedItems="{Binding MovieInformation.SelectedMovies,Mode=OneWayToSource}" />
                     </i:Interaction.Behaviors>
                     <ListBox.ItemTemplate>
                         <DataTemplate>

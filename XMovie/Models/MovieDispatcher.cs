@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 using XMovie.Common;
+using XMovie.Models.Repository;
 using XMovie.ViewModels;
 
 namespace XMovie.Models
@@ -58,15 +59,9 @@ namespace XMovie.Models
                     {
                         try
                         {
-
-                            using (var context = new XMovieContext())
+                            using (var repos = new RepositoryService())
                             {
-                                context.Movies.Add(movie);
-                                foreach (var thumbnail in movie.Thumbnails)
-                                {
-                                    context.Thumbnails.Add(thumbnail);
-                                }
-                                context.SaveChanges();
+                                repos.InsertMovie(movie);
                             }
                             movieCollection.Add(new MovieItemViewModel(movie.MovieId));
                         }
@@ -92,25 +87,21 @@ namespace XMovie.Models
 
         public async Task UnregisterMovie(string movieId, ObservableCollection<MovieItemViewModel> movieCollection)
         {
+            var moviePath = "";
             await dispatcher.InvokeAsync(() =>
             {
                 List<string> thumbnailPaths;
-                using (var context = new XMovieContext())
+                using (var repos = new RepositoryService())
                 {
-                    var tags = context.TagMaps.Where(tm => tm.MovieId == movieId).ToList();
-                    context.TagMaps.RemoveRange(tags);
-                    var thumbs = context.Thumbnails.Where(t => t.MovieId == movieId).ToList();
-                    thumbnailPaths = thumbs.Select(t => t.Path).ToList();
-                    context.Thumbnails.RemoveRange(thumbs);
-
-                    var mov = context.Movies.Where(m => m.MovieId == movieId).FirstOrDefault();
-                    // (サブディレクトリとして)同じディレクトリが登録されている場合、
-                    // 削除イベントが重複する
-                    if (mov != null)
+                    var movie = repos.FindMovie(movieId);
+                    if (movie == null)
                     {
-                        context.Movies.Remove(mov);
-                        context.SaveChanges();
+                        logger.Information($"動画はすでに登録解除されています。{movieId}");
+                        return;
                     }
+                    moviePath = movie.Path;
+                    thumbnailPaths = repos.FindMovieThumbnails(movieId).Select(t => t.Path).ToList();
+                    repos.RemoveMovie(movie);
                 }
 
                 var model = movieCollection.Where(m => m.MovieId == movieId).FirstOrDefault();
@@ -136,33 +127,10 @@ namespace XMovie.Models
                         }
                     }
                 }
+                logger.Information($"削除された動画の登録を解除しました。{moviePath}");
             });
 
         }
 
-        /*
-        public async Task RemoveMovie(string path, ObservableCollection<MovieItemViewModel> movieCollection)
-        {
-            await dispatcher.InvokeAsync(() =>
-            {
-                App.Current.Dispatcher.Invoke(async () =>
-                {
-                    ICollection<string> movieIds;
-                    using (var context = new XMovieContext())
-                    {
-                        var keys = context.Movies.Select(m => new { m.Path, m.MovieId });
-                        movieIds = keys.Where(tmp => Util.IsEqualsNormalizedPath(tmp.Path, path))
-                                       .Select(tmp => tmp.MovieId)
-                                       .ToList();
-                    }
-                    foreach (var m in movieIds)
-                    {
-                        await UnregisterMovie(m, movieCollection);
-                    }
-                });
-
-            });
-        }
-        */
     }
 }

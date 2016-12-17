@@ -121,12 +121,12 @@
                     <ColumnDefinition />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <ItemsControl ItemsSource="{Binding TagMaps}">
+                <ItemsControl ItemsSource="{Binding Tags}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Button Margin="4" Padding="0" BorderThickness="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
                                     HorizontalAlignment="Center" VerticalAlignment="Center"
-                                    Content="{Binding}"
+                                    Content="{Binding Path=Name}"
 
                                     />
                         </DataTemplate>

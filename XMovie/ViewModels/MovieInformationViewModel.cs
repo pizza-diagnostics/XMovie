@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using XMovie.Common;
 using XMovie.Models;
+using XMovie.Models.Repository;
 using XMovie.Service;
 
 namespace XMovie.ViewModels
@@ -21,22 +22,22 @@ namespace XMovie.ViewModels
             this.dialogService = dialogService;
 
             Tags = new ObservableCollection<TagViewModel>();
-            using (var context = new XMovieContext())
+            using (var repos = new RepositoryService())
             {
-                foreach (var category in context.TagCategories)
+                foreach (var category in repos.GetAllCategories())
                 {
-                    var tag = new TagViewModel(dialogService)
+                    var tagModel = new TagViewModel(dialogService)
                     {
                         TagCategoryId = category.TagCategoryId,
                         CategoryName = category.Name
                     };
-                    Tags.Add(tag);
+                    Tags.Add(tagModel);
                 }
             }
         }
 
-        private ObservableCollection<object> selectedMovies;
-        public ObservableCollection<object> SelectedMovies
+        private ObservableCollection<MovieItemViewModel> selectedMovies;
+        public ObservableCollection<MovieItemViewModel> SelectedMovies
         {
             get { return selectedMovies; }
             set {
@@ -77,23 +78,21 @@ namespace XMovie.ViewModels
                     addNewCategoryCommand = new RelayCommand((param) =>
                     {
                         string categoryName = (string)param;
-                        using (var context = new XMovieContext())
+                        using (var repos = new RepositoryService())
                         {
-                            var isExist = context.TagCategories.Any(c => c.Name.Equals(categoryName));
-                            if (isExist)
+                            if (repos.IsExistCategory(categoryName))
                             {
                                 SetError("AddnewCategoryCommand", $"{categoryName}は登録済みです。");
                             }
                             else
                             {
-                                var category = new TagCategory() { Name = categoryName };
-                                context.TagCategories.Add(category);
-                                context.SaveChanges();
-                                Tags.Add(new TagViewModel(this.dialogService) {
-                                    TagCategoryId = category.TagCategoryId,
-                                    CategoryName = categoryName
-                                });
+                                var category = repos.InsertNewCategory(categoryName);
 
+                                Tags.Add(new TagViewModel(dialogService)
+                                {
+                                    TagCategoryId = category.TagCategoryId,
+                                    CategoryName = category.Name
+                                });
                             }
                             NewCategoryName = "";
                         }
@@ -168,23 +167,9 @@ namespace XMovie.ViewModels
                         var tagViewModel = (TagViewModel)param;
                         var categoryId = tagViewModel.TagCategoryId;
 
-                        // タグ/カテゴリを削除
-                        using (var context = new XMovieContext())
+                        using (var repos = new RepositoryService())
                         {
-                            var deleteTags = context.Tags.Where(t => t.TagCategoryId == categoryId);
-                            var deleteTagId = deleteTags.Select(t => t.TagId);
-
-                            // TagMapsから削除
-                            var deleteTagMaps = context.TagMaps.Where(tm => deleteTagId.Contains(tm.TagId));
-                            context.TagMaps.RemoveRange(deleteTagMaps);
-
-                            // Tagsから削除
-                            context.Tags.RemoveRange(deleteTags);
-
-                            // Categoryを削除
-                            context.TagCategories.RemoveRange(context.TagCategories.Where(tc => tc.TagCategoryId == categoryId));
-
-                            context.SaveChanges();
+                            repos.RemoveTagCategory(categoryId);
                         }
 
                         Tags.Remove(Tags.Where(t => t.TagCategoryId == categoryId).FirstOrDefault());

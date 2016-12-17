@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using XMovie.Common;
 using XMovie.Models;
+using XMovie.Models.Repository;
 using XMovie.Models.Settings;
 
 namespace XMovie.ViewModels
@@ -28,9 +29,9 @@ namespace XMovie.ViewModels
         public MovieItemViewModel(string movieId) : this()
         {
             MovieId = movieId;
-            using (var context = new XMovieContext())
+            using (var repos = new RepositoryService())
             {
-                var movie = context.Movies.Find(MovieId);
+                var movie = repos.FindMovie(movieId);
                 Rank = movie.Rank;
                 PlayCount = movie.PlayCount;
                 Path = movie.Path;
@@ -54,11 +55,11 @@ namespace XMovie.ViewModels
             get { return System.IO.Path.GetFileNameWithoutExtension(FileName); }
         }
 
-        private ObservableCollection<TagMapViewModel> tagMaps;
-        public ObservableCollection<TagMapViewModel> TagMaps
+        private ObservableCollection<Tag> tags;
+        public ObservableCollection<Tag> Tags
         {
-            get { return this.tagMaps; }
-            set { SetProperty(ref tagMaps, value, "TagMaps"); }
+            get { return tags; }
+            set { SetProperty(ref tags, value, "Tags"); }
         }
 
         private int rank;
@@ -149,56 +150,54 @@ namespace XMovie.ViewModels
             {
                 try
                 {
-                    using (var context = new XMovieContext())
+                    IList<Thumbnail> thumbnails = null;
+                    using (var repos = new RepositoryService())
                     {
-                        var thumbnails = context.Thumbnails
-                                                .Where(t => t.MovieId.Equals(MovieId))
-                                                .OrderBy(t => t.Seconds)
-                                                .ToArray();
-                        if (thumbnails == null || thumbnails.Count() == 0)
-                           return null;
-                        var visual = new DrawingVisual();
-                        var x = 0;
-                        var y = 0;
-                        using (var dc = visual.RenderOpen())
+                        thumbnails = repos.FindMovieThumbnails(MovieId);
+                    }
+                    if (thumbnails == null || thumbnails.Count() == 0)
+                        return null;
+
+                    var visual = new DrawingVisual();
+                    var x = 0;
+                    var y = 0;
+                    using (var dc = visual.RenderOpen())
+                    {
+                        foreach (var item in thumbnails.Select((t, i) => new { t, i }))
                         {
-                            foreach (var item in thumbnails.Select((t, i) => new { t, i }))
+                            if (item.i >= thumbnailCount)
                             {
-                                if (item.i >= thumbnailCount)
+                                break;
+                            }
+
+                            BitmapSource bitmapImage;
+                            if (File.Exists(item.t.Path))
+                            {
+                                using (var stream = new FileStream(item.t.Path, FileMode.Open, FileAccess.Read))
                                 {
-                                    break;
+                                    var decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+                                    bitmapImage = decoder.Frames[0];
                                 }
 
-                                BitmapSource bitmapImage;
-                                if (File.Exists(item.t.Path))
-                                {
-                                    using (var stream = new FileStream(item.t.Path, FileMode.Open, FileAccess.Read))
-                                    {
-                                        var decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
-                                        bitmapImage = decoder.Frames[0];
-                                    }
-
-                                    dc.DrawImage(bitmapImage, new Rect(x, 0, bitmapImage.PixelWidth, bitmapImage.PixelHeight));
-                                    y = bitmapImage.PixelHeight; // 固定
-                                    x += bitmapImage.PixelWidth;
-                                }
-                                else
-                                {
-                                    logger.Error($"サムネイル画像が見つかりません。{item.t.Path}");
-                                }
+                                dc.DrawImage(bitmapImage, new Rect(x, 0, bitmapImage.PixelWidth, bitmapImage.PixelHeight));
+                                y = bitmapImage.PixelHeight; // 固定
+                                x += bitmapImage.PixelWidth;
+                            }
+                            else
+                            {
+                                logger.Error($"サムネイル画像が見つかりません。{item.t.Path}");
                             }
                         }
-                        if (x > 0 && y > 0)
-                        {
-                            var bitmap = new RenderTargetBitmap(x, y, 96, 96, PixelFormats.Pbgra32);
-                            bitmap.Render(visual);
-                            return bitmap;
-                        }
-                        else
-                        {
-                            return null;
-                        }
-
+                    }
+                    if (x > 0 && y > 0)
+                    {
+                        var bitmap = new RenderTargetBitmap(x, y, 96, 96, PixelFormats.Pbgra32);
+                        bitmap.Render(visual);
+                        return bitmap;
+                    }
+                    else
+                    {
+                        return null;
                     }
                 }
                 catch (Exception ex)
@@ -211,15 +210,9 @@ namespace XMovie.ViewModels
 
         public void UpdateTags()
         {
-            using (var context = new XMovieContext())
+            using (var repos = new RepositoryService())
             {
-                var tags = from tm in context.TagMaps
-                           join t in context.Tags
-                           on tm.TagId equals t.TagId
-                           where tm.MovieId == MovieId
-                           select new TagMapViewModel(){ TagId = tm.TagId, TagMapId = tm.TagMapId, Name = t.Name };
-
-                TagMaps = new ObservableCollection<TagMapViewModel>(tags);
+                Tags = new ObservableCollection<Tag>(repos.FindMovieTags(new string[] { MovieId }));
             }
         }
 
@@ -233,14 +226,15 @@ namespace XMovie.ViewModels
                 {
                     changeRankCommand = new RelayCommand((param) =>
                     {
-                        using (var context = new XMovieContext())
+                        using (var repos = new RepositoryService())
                         {
-                            var movie = context.Movies.Find(MovieId);
-                            movie.Rank += (int)param;
-                            Rank = movie.Rank;
-                            context.SaveChanges();
+                            int r = (int)param;
+                            var movie = repos.ApplyMovie(MovieId, (m => m.Rank += r));
+                            if (movie != null)
+                            {
+                                Rank = movie.Rank;
+                            }
                         }
-                        OnPropertyChanged("Movie.Rank");
                     });
                 }
                 return changeRankCommand;
@@ -260,11 +254,13 @@ namespace XMovie.ViewModels
                         try
                         {
                             System.Diagnostics.Process.Start(Path);
-                            using (var context = new XMovieContext())
+                            using (var repos = new RepositoryService())
                             {
-                                var movie = context.Movies.Find(MovieId);
-                                PlayCount = ++movie.PlayCount;
-                                context.SaveChanges();
+                                var movie = repos.ApplyMovie(MovieId, (m => ++m.PlayCount));
+                                if (movie != null)
+                                {
+                                    PlayCount = movie.PlayCount;
+                                }
                             }
                         }
                         catch (Exception ex)
@@ -287,7 +283,7 @@ namespace XMovie.ViewModels
                     addTagCommand = new RelayCommand((param) =>
                     {
                         var tagParam = (Tag)param;
-                        var isExist = TagMaps.Where(tm => tm.TagId == tagParam.TagId).Count() > 0;
+                        var isExist = Tags.Any(t => t.TagId == tagParam.TagId);
                         if (!isExist)
                         {
                             // TODO: 冗長
@@ -308,8 +304,8 @@ namespace XMovie.ViewModels
                 {
                     removeTagCommand = new RelayCommand((param) =>
                     {
-                        var remove = TagMaps.Where(tm => tm.TagId == ((Tag)param).TagId).FirstOrDefault();
-                        TagMaps.Remove(remove);
+                        var remove = Tags.Where(t => t.TagId == ((Tag)param).TagId).FirstOrDefault();
+                        Tags.Remove(remove);
                     });
                 }
                 return removeTagCommand;
@@ -366,16 +362,14 @@ namespace XMovie.ViewModels
 
                         IsRenameMode = false;
 
-                        using (var context = new XMovieContext())
+                        using (var repos = new RepositoryService())
                         {
-                            var movie = context.Movies.Where(m => m.MovieId == MovieId).FirstOrDefault();
+                            var movie = repos.ApplyMovie(MovieId, (m => m.Path = destPath));
                             if (movie != null)
                             {
-                                logger.Information($"ファイル名を変更しました。{movie.Path} -> {destPath}");
-                                movie.Path = destPath;
+                                logger.Information($"ファイル名を変更しました。{Path} -> {destPath}");
+                                Path = destPath;
                             }
-                            context.SaveChanges();
-                            Path = destPath;
                         }
                     });
                 }
@@ -433,21 +427,20 @@ namespace XMovie.ViewModels
                     {
                         var model = (MovieItemViewModel)param;
                         model.IsEnabled = false;
-                        using (var context = new XMovieContext())
+
+                        using (var repos = new RepositoryService())
                         {
-                            var movie = context.Movies.Where(m => m.MovieId == model.MovieId).FirstOrDefault();
+                            var movie = repos.FindMovie(model.MovieId);
                             if (movie != null)
                             {
-                                var thumbnails = context.Thumbnails.Where(t => t.MovieId == model.MovieId);
-                                context.Thumbnails.RemoveRange(thumbnails);
-                                movie.Thumbnails.Clear();
-
+                                repos.RemoveMovieThumbnails(model.MovieId);
                                 var importer = new MovieImporter();
-                                importer.UpdateMovieThumbnails(movie.Path, Util.MovieThumbnailDirectory, movie);
+                                importer.UpdateMovieThumbnails(model.Path, Util.MovieThumbnailDirectory, movie);
+                                repos.UpdateMovie(movie);
                                 OnPropertyChanged("ThumbnailImage");
                             }
-                            context.SaveChanges();
                         }
+
                         model.IsEnabled = true;
                     });
                 }

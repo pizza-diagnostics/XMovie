@@ -1,17 +1,14 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interactivity;
+using XMovie.ViewModels;
 
 namespace XMovie.Common.Behaviors
 {
-    public class ListBoxSelectedItemsBehavior : Behavior<ListBox>
+    public class ListBoxSelectedMovieItemsBehavior : ListBoxSelectedItemsBehavior<MovieItemViewModel> { }
+
+    public class ListBoxSelectedItemsBehavior<T> : Behavior<ListBox>
     {
         private bool IsCleanedUp { get; set; } = false;
 
@@ -41,9 +38,9 @@ namespace XMovie.Common.Behaviors
 
         private void AssociatedObject_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            var array = new object[AssociatedObject.SelectedItems.Count];
+            var array = new T[AssociatedObject.SelectedItems.Count];
             AssociatedObject.SelectedItems.CopyTo(array, 0);
-            SelectedItems = new ObservableCollection<object>(array);
+            SelectedItems = new ObservableCollection<T>(array);
         }
 
         private void AssociatedObject_Unloaded(object sender, RoutedEventArgs e)
@@ -52,12 +49,12 @@ namespace XMovie.Common.Behaviors
         }
 
         private static readonly DependencyProperty SelectedItemsProperty =
-            DependencyProperty.Register("SelectedItems", typeof(ObservableCollection<object>), typeof(ListBoxSelectedItemsBehavior),
+            DependencyProperty.Register("SelectedItems", typeof(ObservableCollection<T>), typeof(ListBoxSelectedItemsBehavior<T>),
                 new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
 
-        public ObservableCollection<object> SelectedItems
+        public ObservableCollection<T> SelectedItems
         {
-            get { return (ObservableCollection<object>)GetValue(SelectedItemsProperty); }
+            get { return (ObservableCollection<T>)GetValue(SelectedItemsProperty); }
             set { SetValue(SelectedItemsProperty, value); }
         }
     }

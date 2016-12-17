@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using XMovie.Common;
+using XMovie.Models.Repository;
 using XMovie.Models.Settings;
 
 namespace XMovie.Models
@@ -86,11 +87,9 @@ namespace XMovie.Models
 
         public Movie Import(string path)
         {
-            using (var context = new XMovieContext())
+            using (var repos = new RepositoryService())
             {
-                var paths = context.Movies.Select(m => m.Path).ToList();
-                var count = paths.Where(p => Util.NormalizePath(p).Equals(Util.NormalizePath(path))).Count();
-                if (count > 0)
+                if (repos.IsExistMovieAtPath(path))
                 {
                     logger.Information($"{path}は登録済みです。");
                     return null;

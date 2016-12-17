@@ -176,6 +176,14 @@
     <Compile Include="Models\MovieDispatcher.cs" />
     <Compile Include="Models\MovieImporter.cs" />
     <Compile Include="Models\MovieImporterException.cs" />
+    <Compile Include="Models\Repository\IRepository.cs" />
+    <Compile Include="Models\Repository\MovieRepository.cs" />
+    <Compile Include="Models\Repository\Repository.cs" />
+    <Compile Include="Models\Repository\RepositoryService.cs" />
+    <Compile Include="Models\Repository\TagCategoryRepository.cs" />
+    <Compile Include="Models\Repository\TagMapRepository.cs" />
+    <Compile Include="Models\Repository\TagRepository.cs" />
+    <Compile Include="Models\Repository\ThumbnailRepository.cs" />
     <Compile Include="Models\Settings\DirectoryMonitorSettings.cs" />
     <Compile Include="Models\Settings\FileExtensionSettings.cs" />
     <Compile Include="Models\Settings\UserSettingManager.cs" />
@@ -193,7 +201,6 @@
     <Compile Include="ViewModels\MovieItemViewModel.cs" />
     <Compile Include="ViewModels\SettingWindowViewModel.cs" />
     <Compile Include="ViewModels\TagViewModel.cs" />
-    <Compile Include="ViewModels\TagMapViewModel.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
     <Page Include="Controls\MovieInformationControl.xaml">
       <SubType>Designer</SubType>

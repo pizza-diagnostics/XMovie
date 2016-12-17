@@ -1,15 +1,12 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using XMovie.Common;
 using XMovie.Models;
 using XMovie.Service;
-using MahApps.Metro.Controls.Dialogs;
-using MahApps.Metro.Controls;
-
+using XMovie.Models.Repository;
 
 namespace XMovie.ViewModels
 {
@@ -30,7 +27,16 @@ namespace XMovie.ViewModels
             set { SetProperty(ref categoryName, value, "CategoryName"); }
         }
 
-        public int TagCategoryId { get; set; }
+        private int tagCategoryId;
+        public int TagCategoryId
+        {
+            get { return tagCategoryId; }
+            set
+            {
+                tagCategoryId = value;
+                UpdateCategoryTags();
+            }
+        }
 
         #endregion
 
@@ -38,49 +44,26 @@ namespace XMovie.ViewModels
 
         private void UpdateCategoryTags()
         {
-            using (var context = new XMovieContext())
+            using (var repo = new RepositoryService())
             {
-                var tags = context.Tags.Where(t => t.TagCategoryId == TagCategoryId).Select(t => t.Name).ToList();
+                var tags = repo.FindCategoryTags(TagCategoryId).Select(t => t.Name);
                 CategoryTags = new ObservableCollection<string>(tags);
             }
-
         }
 
         private void UpdateSelectedMovieTags()
         {
             // 選択されている動画に設定されているタグをTagsに設定
-            using (var context = new XMovieContext())
+            var selectedMovieIdList = selectedMovies?.Select(m => m.MovieId);
+            if (selectedMovieIdList == null)
             {
-                var selectedMovieIdList = selectedMovies?.Select(m => $"'{((MovieItemViewModel)m).MovieId}'");
-                if (selectedMovieIdList == null)
+                Tags = new ObservableCollection<Tag>();
+            }
+            else
+            {
+                using (var repos = new RepositoryService())
                 {
-                    Tags = new ObservableCollection<Tag>();
-                }
-                else
-                {
-                    /*
-                    var tags = from tm in context.TagMaps
-                               join t in context.Tags
-                               on tm.TagId equals t.TagId
-                               where selectedMovieIdList.Contains(tm.MovieId) && t.TagCategoryId == TagCategoryId
-                               select new Tag() { Name = t.Name, TagId = t.TagId, TagCategoryId = t.TagCategoryId };
-                    Tags = new ObservableCollection<Tag>(tags.ToList());
-                    */
-                    // 妥協
-                    var query = $@"
-select
-    T.*
-from
-    Tags T, TagMaps TM
-where
-    T.TagId = TM.TagId and
-    T.TagCategoryId = {TagCategoryId} and
-    TM.MovieId in ({String.Join(",", selectedMovieIdList)})
-group by
-    T.TagId
-";
-                    var results = context.Database.SqlQuery<Tag>(query);
-                    Tags = new ObservableCollection<Tag>(results);
+                    Tags = new ObservableCollection<Tag>(repos.FindMovieTags(selectedMovieIdList.ToList()));
                 }
             }
         }
@@ -124,30 +107,11 @@ group by
                     addTagCommand = new RelayCommand((param) =>
                     {
                         var tag = (Tag)param;
-                        using (var context = new XMovieContext())
-                        {
-                            // 2. 同じタグが設定されていない動画にタグを追加
+                        var targetMovieIdList = SelectedMovies.Select(m => m.MovieId);
 
-                            // TagMapから既に同タグが設定されている動画を抽出
-                            var targetMovieIdList = SelectedMovies.Select(m => ((MovieItemViewModel)m).MovieId);
-                            var ignores = context.TagMaps
-                                                 .Where(tm => tm.TagId == tag.TagId && targetMovieIdList.Contains(tm.MovieId))
-                                                 .Select(tm => tm.MovieId)
-                                                 .ToList();
-                            
-                            // ignoresに含まれていない動画にのみタグを設定
-                            foreach (MovieItemViewModel movie in selectedMovies)
-                            {
-                                if (!ignores.Contains(movie.MovieId))
-                                {
-                                    var tagMap = new TagMap() {
-                                        TagId = tag.TagId,
-                                        MovieId = movie.MovieId
-                                    };
-                                    context.TagMaps.Add(tagMap);
-                                }
-                            }
-                            context.SaveChanges();
+                        using (var repos = new RepositoryService())
+                        {
+                            repos.SetTagToMovies(tag, targetMovieIdList.ToList());
                         }
 
                         UpdateSelectedMovieTags();
@@ -169,14 +133,15 @@ group by
                     removeTagCommand = new RelayCommand((param) =>
                     {
                         var tagId = ((Tag)param).TagId;
-                        using (var context = new XMovieContext())
+                        var movieIdList = selectedMovies.Select(m => m.MovieId).ToList();
+
+                        using (var repo = new RepositoryService())
                         {
-                            var movieIdList = selectedMovies.Select(m => ((MovieItemViewModel)m).MovieId);
-                            var removes = context.TagMaps.Where(tm => movieIdList.Contains(tm.MovieId) && tm.TagId == tagId).Select(tm => tm);
-                            context.TagMaps.RemoveRange(removes);
-                            context.SaveChanges();
+                            repo.RemoveTagMaps(tagId, movieIdList);
                         }
+
                         UpdateSelectedMovieTags();
+                        UpdateCategoryTags();
                     });
                 }
                 return removeTagCommand;
@@ -202,8 +167,8 @@ group by
 
         #region SelectedMovies
 
-        private ObservableCollection<object> selectedMovies;
-        public ObservableCollection<object> SelectedMovies
+        private ObservableCollection<MovieItemViewModel> selectedMovies;
+        public ObservableCollection<MovieItemViewModel> SelectedMovies
         {
             get { return selectedMovies; }
             set
