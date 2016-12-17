@@ -63,7 +63,7 @@ namespace XMovie.ViewModels
             {
                 using (var repos = new RepositoryService())
                 {
-                    Tags = new ObservableCollection<Tag>(repos.FindMovieTags(selectedMovieIdList.ToList()));
+                    Tags = new ObservableCollection<Tag>(repos.FindMovieTags(selectedMovieIdList.ToList(), TagCategoryId));
                 }
             }
         }

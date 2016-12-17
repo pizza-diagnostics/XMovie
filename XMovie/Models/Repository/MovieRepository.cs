@@ -28,6 +28,11 @@ namespace XMovie.Models.Repository
 
         #region Find
 
+        public int Count()
+        {
+            return dbSet.Count();
+        }
+
         public Movie FindMovieAtPath(string path)
         {
             var movies = GetAll();

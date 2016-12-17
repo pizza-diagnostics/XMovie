@@ -24,13 +24,18 @@ namespace XMovie.Models.Repository
             context = new XMovieContext();
 
             movieRepository = new MovieRepository(context);
-            tagRepository = new TagRepository(context);
-            tagMapRepository = new TagMapRepository(context);
             thumbnailRepository = new ThumbnailRepository(context);
             tagCategoryRepository = new TagCategoryRepository(context);
+            tagRepository = new TagRepository(context);
+            tagMapRepository = new TagMapRepository(context);
         }
 
         #region Movie
+        public int MovieCount()
+        {
+            return movieRepository.Count();
+        }
+
         public IList<Movie> GetAllMovie()
         {
             return movieRepository.GetAll();
@@ -66,12 +71,6 @@ namespace XMovie.Models.Repository
             if (tags.Count() > 0)
             {
                 // 1. LIKE OR でTagを抽出
-                var tt = tagRepository.FindAllTagsOr(tags).ToList();
-                foreach (var t in tt)
-                {
-                    System.Diagnostics.Debug.Print($"WTF {t.Name}");
-                }
-
                 var tagList = tagRepository.FindAllTagsOr(tags).Select(t => t.TagId);
                 // 2. TagMapからMovieIdを抽出
                 var movieIdList = tagMapRepository.FindAll(tm => tagList.Contains(tm.TagId))
@@ -172,6 +171,12 @@ namespace XMovie.Models.Repository
             var tagIdList = tagMapRepository.FindAll(tm => movieIdList.Contains(tm.MovieId)).Select(tm => tm.TagId);
             return tagRepository.FindAll(t => tagIdList.Contains(t.TagId)).Distinct().ToList();
                                 
+        }
+
+        public IList<Tag> FindMovieTags(IList<string> movieIdList, int categoryId)
+        {
+            var tagIdList = tagMapRepository.FindAll(tm => movieIdList.Contains(tm.MovieId)).Select(tm => tm.TagId);
+            return tagRepository.FindAll(t => tagIdList.Contains(t.TagId) && t.TagCategoryId == categoryId).Distinct().ToList();
         }
         #endregion
 

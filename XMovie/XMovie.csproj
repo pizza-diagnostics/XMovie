@@ -161,6 +161,7 @@
     <Compile Include="Common\Behaviors\FileDropBehavior.cs" />
     <Compile Include="Common\Behaviors\ListBoxSelectedItemsBehavior.cs" />
     <Compile Include="Common\Behaviors\WindowCloseBehavior.cs" />
+    <Compile Include="Common\InverseBooleanConverter.cs" />
     <Compile Include="Common\Properties\FocusProperty.cs" />
     <Compile Include="Common\RelayCommand.cs" />
     <Compile Include="Common\Behaviors\ScrollIntoViewBehavior.cs" />

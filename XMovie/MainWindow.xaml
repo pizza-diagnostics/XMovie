@@ -33,6 +33,11 @@
 
 
     <Grid>
+
+        <Grid.Resources>
+            <common:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+        </Grid.Resources>
+
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -72,7 +77,8 @@
         <Border Grid.Row="1" BorderThickness="1" BorderBrush="Gray" Height="1" Margin="10,0"/>
 
         <!-- 2.Search Menu -->
-        <Grid Grid.Row="2">
+        <Grid Grid.Row="2" IsEnabled="{Binding IsSearching, Converter={StaticResource InverseBooleanConverter}}">
+
             <StackPanel Orientation="Horizontal">
                 <TextBlock Margin="10,10,0,10" VerticalAlignment="Center">Search:</TextBlock>
                 <ComboBox Margin="10" Width="200" IsEditable="True" 
@@ -92,10 +98,14 @@
                         </i:EventTrigger>
                     </i:Interaction.Triggers>
                 </ComboBox>
+
+                <metro:ProgressRing IsActive="{Binding IsSearching}" Foreground="AntiqueWhite"
+                                    Width="30" Height="30" Margin="0,0,10,0"/>
+
                 <metro:ToggleSwitch VerticalAlignment="Center" OnLabel="File search" OffLabel="Tag search"
                                     Width="130"
                                     FontStyle="Normal" FontSize="12" FontFamily="Yu Gothic UI"
-                                    IsChecked="{Binding Path=Settings.IsFileSearch}"/>
+                                    IsChecked="{Binding Path=IsFileSearch, Mode=TwoWay}" />
 
                 <TextBlock Margin="10,10,0,10" VerticalAlignment="Center">Sort Order:</TextBlock>
                 <ComboBox ItemsSource="{Binding Sorter}" SelectedIndex="{Binding Settings.SorterIndex}"
@@ -244,7 +254,7 @@
         </Grid>
 
         <!-- 5. StatusBar -->
-        <Grid Grid.Row="5">
+        <Grid Grid.Row="5" Height="20">
             <StatusBar>
                 <StatusBarItem Content="{Binding Logs.LastLogSummary}" />
             </StatusBar>

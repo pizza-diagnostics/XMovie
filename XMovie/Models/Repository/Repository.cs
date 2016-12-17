@@ -33,7 +33,7 @@ namespace XMovie.Models.Repository
 
         public IList<TEntity> GetAll()
         {
-            return dbSet.ToList();
+            return dbSet?.ToList();
         }
 
         public void Delete(TEntity entity)

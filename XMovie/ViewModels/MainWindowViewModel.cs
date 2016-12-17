@@ -188,12 +188,32 @@ namespace XMovie.ViewModels
             }
         }
 
+        private string lastSearchCondition = "cmd:initial:-1";
+
         public UserSettings Settings { get; set; }
 
         public int ThumbnailCountListIndex
         {
             get { return Settings.ThumbnailCount - 1; }
             set { Settings.ThumbnailCount = value + 1; }
+        }
+
+        public bool IsFileSearch
+        {
+            get { return Settings.IsFileSearch; }
+            set
+            {
+                bool v = IsFileSearch;
+                Settings.IsFileSearch = value;
+                SetProperty(ref v, value, "IsFileSearch");
+            }
+        }
+
+        private bool isSearching;
+        public bool IsSearching
+        {
+            get { return isSearching; }
+            set { SetProperty(ref isSearching, value, "IsSearching"); }
         }
 
         #endregion
@@ -272,6 +292,23 @@ namespace XMovie.ViewModels
             }
         }
 
+        private ICommand tagSearchCommand;
+        public ICommand TagSearchCommand
+        {
+            get
+            {
+                if (tagSearchCommand == null)
+                {
+                    tagSearchCommand = new RelayCommand((param) =>
+                    {
+                        IsFileSearch = false;
+                        SearchMovies(((Tag)param).Name);
+                    });
+                }
+                return tagSearchCommand;
+            }
+        }
+
         private ICommand addTagCommand;
         public ICommand AddTagCommand
         {
@@ -282,6 +319,9 @@ namespace XMovie.ViewModels
                     addTagCommand = new RelayCommand((param) =>
                     {
                         var tagParameter = (TagCommandParameter)param;
+                        if (String.IsNullOrWhiteSpace(tagParameter.Name))
+                            return;
+
                         using (var repos = new RepositoryService())
                         {
                             var tag = repos.InsertNewTag(tagParameter.Name, tagParameter.TagCategoryId);
@@ -508,10 +548,17 @@ namespace XMovie.ViewModels
             OnPropertyChanged("SearchKeywords");
         }
 
-        private void SearchMovies(string keywords)
+        private async void SearchMovies(string keywords)
         {
+            var cond = $"{keywords}:{Settings.SorterIndex}";
+            if (lastSearchCondition.Equals(cond))
+                return;
+            lastSearchCondition = cond;
+
             // 検索歴の追加
             AddSearchHistory(keywords);
+
+            IsSearching = true;
 
             var sort = Sorter[Settings.SorterIndex];
             if ("cmd:duplicate".Equals(keywords))
@@ -522,15 +569,16 @@ namespace XMovie.ViewModels
             {
                 var keys = new List<string>(keywords.Split(new char[] { ',', ' ', '　', '、' }, StringSplitOptions.RemoveEmptyEntries));
 
-                if (Settings.IsFileSearch)
+                if (IsFileSearch)
                 {
-                    SearchMoviesWithPath(keys, sort);
+                    await SearchMoviesWithPath(keys, sort);
                 }
                 else
                 {
-                    SearchMoviesWithTags(keys, sort);
+                    await SearchMoviesWithTags(keys, sort);
                 }
             }
+            IsSearching = false;
 
         }
 
@@ -546,29 +594,46 @@ namespace XMovie.ViewModels
             }
         }
 
-        private void SearchMoviesWithTags(List<string> tagKeys, SortDescriptor sort)
+        private async Task SearchMoviesWithTags(List<string> tagKeys, SortDescriptor sort)
         {
             Movies.Clear();
-            using (var repos = new RepositoryService())
+            await Task.Run(async () =>
             {
-                var movies = repos.FindMoviesByTags(tagKeys, sort);
-                foreach (var movie in movies)
+                using (var repos = new RepositoryService())
                 {
-                    Movies.Add(new MovieItemViewModel(movie.MovieId));
+                    var movies = repos.FindMoviesByTags(tagKeys, sort);
+                    logger.Information($"{movies.Count()}件見つかりました。[{String.Join(",", tagKeys)}]");
+                    foreach (var movie in movies)
+                    {
+                        App.Current.Dispatcher.Invoke(() =>
+                        {
+                            Movies.Add(new MovieItemViewModel(movie.MovieId));
+                        });
+                        await Task.Delay(5);
+                    }
                 }
-            }
+            });
         }
 
-        private void SearchMoviesWithPath(List<string> pathKeys, SortDescriptor sort)
+        private async Task SearchMoviesWithPath(List<string> pathKeys, SortDescriptor sort)
         {
             Movies.Clear();
-            using (var repo = new RepositoryService())
+            await Task.Run(async () =>
             {
-                foreach (var movie in repo.FindMoviesByPathKeys(pathKeys, sort))
+                using (var repo = new RepositoryService())
                 {
-                    Movies.Add(new MovieItemViewModel(movie.MovieId));
+                    var movies = repo.FindMoviesByPathKeys(pathKeys, sort);
+                    logger.Information($"{movies.Count()}件見つかりました。[{String.Join(",", pathKeys)}]");
+                    foreach (var movie in movies)
+                    {
+                        App.Current.Dispatcher.Invoke(() =>
+                        {
+                            Movies.Add(new MovieItemViewModel(movie.MovieId));
+                        });
+                        await Task.Delay(5);
+                    }
                 }
-            }
+            });
         }
 
         private void AddDirectoryMonitor(string path)

@@ -127,7 +127,8 @@
                             <Button Margin="4" Padding="0" BorderThickness="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
                                     HorizontalAlignment="Center" VerticalAlignment="Center"
                                     Content="{Binding Path=Name}"
-
+                                    Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type metroc:MetroWindow}},Path=DataContext.TagSearchCommand}"
+                                    CommandParameter="{Binding}"
                                     />
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
