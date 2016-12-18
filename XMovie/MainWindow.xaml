@@ -98,51 +98,39 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
 
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
 
         </Grid.RowDefinitions>
 
-        <!-- 0.Menu -->
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10,5" Height="30">
-            <StackPanel.Resources>
-                <ResourceDictionary>
-                    <VisualBrush x:Key="ThumbnailCountImage" Visual="{StaticResource appbar_list}" />
-                </ResourceDictionary>
-            </StackPanel.Resources>
-            <metro:SplitButton ItemsSource="{Binding Path=ThumbnailCountList}" SelectedIndex="{Binding Path=ThumbnailCountListIndex}">
-                <metro:SplitButton.Icon>
-                    <Rectangle Width="15" Height="15" Margin="5" Fill="{StaticResource ThumbnailCountImage}" />
-                </metro:SplitButton.Icon>
-            </metro:SplitButton>
-            <Button Width="30" Height="30" Margin="10,0,0,0" Padding="0" BorderThickness="0"
-                    HorizontalAlignment="Right"
-                    Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-                    Command="{Binding ToolModel.ToolCommand}"
-                    >
-                <Rectangle Width="20" Height="20">
-                    <Rectangle.Fill>
-                        <VisualBrush Stretch="Uniform" Visual="{StaticResource appbar_settings}" />
-                    </Rectangle.Fill>
-                </Rectangle>
-                
-            </Button>
-        </StackPanel>
-        
-        <!-- 1.Separator -->
-        <Border Grid.Row="1" BorderThickness="1" BorderBrush="Gray" Height="1" Margin="10,0"/>
-
         <!-- 2.Search Menu -->
-        <Grid Grid.Row="2" IsEnabled="{Binding IsSearching, Converter={StaticResource InverseBooleanConverter}}">
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal" IsEnabled="{Binding IsSearching, Converter={StaticResource InverseBooleanConverter}}">
+                <Menu VerticalAlignment="Center" ItemsSource="{Binding SearchTags}"
+                      Height="20" Width="45"
+                      Margin="10,0,5,0"
+                      >
 
-            <StackPanel Orientation="Horizontal">
+                    <Menu.ItemContainerStyle>
+                        <Style TargetType="{x:Type MenuItem}">
+                            <Setter Property="Header" Value="{Binding Path=Header}"/>
+                            <Setter Property="ItemsSource" Value="{Binding MenuItems}"/>
+                            <Setter Property="Command" Value="{Binding RelativeSource={RelativeSource AncestorType={x:Type metro:MetroWindow}},Path=DataContext.SetSearchTagCommand}" />
+                            <Setter Property="CommandParameter" Value="{Binding Header}" />
+                        </Style>
+                    </Menu.ItemContainerStyle>
+
+                </Menu>
+
                 <TextBlock Margin="10,10,0,10" VerticalAlignment="Center">Search:</TextBlock>
                 <ComboBox Margin="10" Width="200" IsEditable="True" 
                           metro:TextBoxHelper.Watermark="Search"
-                          SelectedValue="{Binding SearchKeywords,Mode=OneWay}"
+                          Text="{Binding SearchKeywords}"
                           ItemsSource="{Binding Settings.SearchHistories}"
                           x:Name="SearchComboBox">
                     <ComboBox.InputBindings>
@@ -178,13 +166,41 @@
 
                 </ComboBox>
             </StackPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                <StackPanel.Resources>
+                    <ResourceDictionary>
+                        <VisualBrush x:Key="ThumbnailCountImage" Visual="{StaticResource appbar_list}" />
+                    </ResourceDictionary>
+                </StackPanel.Resources>
+                <metro:SplitButton Height="30"
+                                   ItemsSource="{Binding Path=ThumbnailCountList}"
+                                   SelectedIndex="{Binding Path=ThumbnailCountListIndex}">
+                    <metro:SplitButton.Icon>
+                        <Rectangle Width="15" Height="15" Margin="5" Fill="{StaticResource ThumbnailCountImage}" />
+                    </metro:SplitButton.Icon>
+                </metro:SplitButton>
+                <Button Width="30" Height="30" Margin="10,0,0,0" Padding="0" BorderThickness="0"
+                        HorizontalAlignment="Right"
+                        Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                        Command="{Binding ToolModel.ToolCommand}"
+                        >
+                    <Rectangle Width="20" Height="20">
+                        <Rectangle.Fill>
+                            <VisualBrush Stretch="Uniform" Visual="{StaticResource appbar_settings}" />
+                        </Rectangle.Fill>
+                    </Rectangle>
+                    
+                </Button>
+                
+            </StackPanel>
         </Grid>
 
         <!-- 3.Separator -->
-        <Border Grid.Row="3" BorderThickness="1" BorderBrush="Gray" Height="1" Margin="10,0"/>
+        <Border Grid.Row="1" BorderThickness="1" BorderBrush="Gray" Height="1" Margin="10,0"/>
 
         <!-- 4.Main -->
-        <Grid Grid.Row="4">
+        <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="300*" />
                 <ColumnDefinition Width="Auto" />
@@ -225,7 +241,7 @@
                         <!--
                             <VirtualizingStackPanel Orientation="Vertical"  />
                             -->
-                            <WrapPanel Orientation="Horizontal" Margin="0" VirtualizingPanel.IsVirtualizing="True"/>
+                            <WrapPanel Orientation="Horizontal" Margin="0" />
                         </ItemsPanelTemplate>
                     </ListBox.ItemsPanel>
                 </ListBox>
@@ -318,7 +334,7 @@
         </Grid>
 
         <!-- 5. StatusBar -->
-        <Grid Grid.Row="5" Height="20">
+        <Grid Grid.Row="3" Height="20">
             <StatusBar>
                 <StatusBarItem Content="{Binding Logs.LastLogSummary}" />
             </StatusBar>

@@ -50,6 +50,11 @@ namespace XMovie.ViewModels
                 }
             });
 
+            var smodel = new SearchTagMenuItemViewModel() { Header = "Tags:" };
+            smodel.CreateTree();
+            SearchTags = new ObservableCollection<SearchTagMenuItemViewModel>();
+            SearchTags.Add(smodel);
+
             SearchMovies("");
 
             var monitor = DirectoryMonitor.Instance;
@@ -75,6 +80,13 @@ namespace XMovie.ViewModels
         }
 
         #region Properties
+
+        private ObservableCollection<SearchTagMenuItemViewModel> searchTags;
+        public ObservableCollection<SearchTagMenuItemViewModel> SearchTags
+        {
+            get { return searchTags; }
+            set { SetProperty(ref searchTags, value, "SearchTags"); }
+        }
 
         public int ThumbnailCount
         {
@@ -219,6 +231,7 @@ namespace XMovie.ViewModels
             get { return isSearching; }
             set { SetProperty(ref isSearching, value, "IsSearching"); }
         }
+
 
         #endregion
 
@@ -481,6 +494,18 @@ namespace XMovie.ViewModels
                 }));
             }
         }
+
+        private ICommand setSearchTagCommand;
+        public ICommand SetSearchTagCommand
+        {
+            get
+            {
+                return setSearchTagCommand ?? (setSearchTagCommand = new RelayCommand((param) =>
+                {
+                    SearchKeywords = $"{SearchKeywords} {(string)param}";
+                }));
+            }
+        }
         #endregion
 
         private void StartMonitor()
@@ -495,9 +520,12 @@ namespace XMovie.ViewModels
             monitor.StartMonitor(Settings.DirectoryMonitors, exts);
         }
 
+        private string searchKeywords;
         public string SearchKeywords
         {
-            get { return Settings.SearchHistories.Count > 0 ? Settings.SearchHistories[0] : ""; }
+            get { return searchKeywords; }
+            set { SetProperty(ref searchKeywords, value, "SearchKeywords"); }
+            //get { return Settings.SearchHistories.Count > 0 ? Settings.SearchHistories[0] : ""; }
         }
 
         private void AddSearchHistory(string keywords)
@@ -514,7 +542,7 @@ namespace XMovie.ViewModels
                     Settings.SearchHistories.RemoveAt(Settings.SearchHistories.Count - 1);
                 }
             }
-            OnPropertyChanged("SearchKeywords");
+            //OnPropertyChanged("SearchKeywords");
         }
 
         private async void SearchMovies(string keywords)

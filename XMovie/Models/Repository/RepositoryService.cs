@@ -85,7 +85,7 @@ namespace XMovie.Models.Repository
             }
             else
             {
-                return movieRepository.GetAll().ToList();
+                return sort.MovieSort(movieRepository.GetAll()).ToList();
             }
         }
 
