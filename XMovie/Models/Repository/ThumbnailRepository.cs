@@ -10,10 +10,9 @@ namespace XMovie.Models.Repository
     {
         public ThumbnailRepository(System.Data.Entity.DbContext context) : base(context) { }
 
-
-        public IList<Thumbnail> FindMovieThumbnails(string movieId)
+        public IQueryable<Thumbnail> FindMovieThumbnails(string movieId)
         {
-            return dbSet.Where(t => t.MovieId.Equals(movieId)).OrderBy(t => t.Seconds).ToList();
+            return dbSet.Where(t => t.MovieId.Equals(movieId)).OrderBy(t => t.Seconds);
         }
     }
 }

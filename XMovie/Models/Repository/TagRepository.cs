@@ -32,12 +32,12 @@ namespace XMovie.Models.Repository
             return tag;
         }
 
-        public IList<Tag> FindAllTagsOr(IList<string> tagKeys)
+        public IQueryable<Tag> FindAllTagsOr(IList<string> tagKeys)
         {
             // CHARINDEXになるためSQLを記述する
             var q = "select * from tags where " + String.Join(" or ", tagKeys.Select((k, i) => $"Name like @p{i}"));
 
-            return context.Database.SqlQuery<Tag>(q, tagKeys.Select(k => $"%{k}%").ToArray()).ToList();
+            return context.Database.SqlQuery<Tag>(q, tagKeys.Select(k => $"%{k}%").ToArray()).AsQueryable<Tag>();
         }
     }
 }

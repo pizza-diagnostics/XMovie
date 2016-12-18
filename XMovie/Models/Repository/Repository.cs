@@ -26,14 +26,14 @@ namespace XMovie.Models.Repository
             return dbSet.Find(keys);
         }
 
-        public IList<TEntity> FindAll(Expression<Func<TEntity, bool>> predicate)
+        public IQueryable<TEntity> FindAll(Expression<Func<TEntity, bool>> predicate)
         {
-            return dbSet.Where(predicate).ToList();
+            return dbSet.Where(predicate);
         }
 
-        public IList<TEntity> GetAll()
+        public IQueryable<TEntity> GetAll()
         {
-            return dbSet?.ToList();
+            return dbSet;
         }
 
         public void Delete(TEntity entity)

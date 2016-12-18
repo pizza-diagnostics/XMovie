@@ -167,6 +167,12 @@
     <Compile Include="Common\Behaviors\ScrollIntoViewBehavior.cs" />
     <Compile Include="Common\TagCommandParameterConverter.cs" />
     <Compile Include="Common\Util.cs" />
+    <Compile Include="Controls\DirectoryMonitorSettingControl.xaml.cs">
+      <DependentUpon>DirectoryMonitorSettingControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\FileExtensionSettingControl.xaml.cs">
+      <DependentUpon>FileExtensionSettingControl.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Controls\MovieInformationControl.xaml.cs">
       <DependentUpon>MovieInformationControl.xaml</DependentUpon>
     </Compile>
@@ -193,16 +199,21 @@
     <Compile Include="Models\TagCommandParameter.cs" />
     <Compile Include="Service\IDialogService.cs" />
     <Compile Include="Service\MetroDialogService.cs" />
-    <Compile Include="SettingWindow.xaml.cs">
-      <DependentUpon>SettingWindow.xaml</DependentUpon>
-    </Compile>
     <Compile Include="ViewModels\LogListViewModel.cs" />
     <Compile Include="ViewModels\MainWindowViewModel.cs" />
     <Compile Include="ViewModels\MovieInformationViewModel.cs" />
     <Compile Include="ViewModels\MovieItemViewModel.cs" />
-    <Compile Include="ViewModels\SettingWindowViewModel.cs" />
     <Compile Include="ViewModels\TagViewModel.cs" />
+    <Compile Include="ViewModels\ToolViewModel.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
+    <Page Include="Controls\DirectoryMonitorSettingControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Controls\FileExtensionSettingControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Controls\MovieInformationControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -245,10 +256,6 @@
     <Page Include="Resources\IconsNonShared.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
-    </Page>
-    <Page Include="SettingWindow.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
   <ItemGroup>

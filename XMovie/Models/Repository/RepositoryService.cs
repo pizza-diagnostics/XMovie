@@ -38,7 +38,7 @@ namespace XMovie.Models.Repository
 
         public IList<Movie> GetAllMovie()
         {
-            return movieRepository.GetAll();
+            return movieRepository.GetAll().ToList();
         }
 
         public Movie FindMovie(params object[] keys)
@@ -48,7 +48,7 @@ namespace XMovie.Models.Repository
 
         public IList<Movie> FindAllMovies(Expression<Func<Movie, bool>> predicate)
         {
-            return movieRepository.FindAll(predicate);
+            return movieRepository.FindAll(predicate).ToList();
         }
 
         public Movie FindMovieAtPath(string path)
@@ -58,12 +58,12 @@ namespace XMovie.Models.Repository
 
         public IList<Movie> FindDuplicateMovies(SortDescriptor sort)
         {
-            return movieRepository.FindDuplicateMovies(sort);
+            return movieRepository.FindDuplicateMovies(sort).ToList();
         }
 
         public IList<Movie> FindMoviesByPathKeys(List<string> pathKeys, SortDescriptor sort)
         {
-            return movieRepository.FindMoviesByPathKeys(pathKeys, sort);
+            return movieRepository.FindMoviesByPathKeys(pathKeys, sort).ToList();
         }
 
         public IList<Movie> FindMoviesByTags(List<string> tags, SortDescriptor sort)
@@ -81,11 +81,11 @@ namespace XMovie.Models.Repository
                                                   .ToList();
 
                 // 3. MoviesからMovieを抽出
-                return movieRepository.FindMovies(m => movieIdList.Contains(m.MovieId), sort);
+                return movieRepository.FindMovies(m => movieIdList.Contains(m.MovieId), sort).ToList();
             }
             else
             {
-                return movieRepository.GetAll();
+                return movieRepository.GetAll().ToList();
             }
         }
 
@@ -101,7 +101,7 @@ namespace XMovie.Models.Repository
 
         public bool IsExistMovieAtPath(string path)
         {
-            return movieRepository.GetAll().Any(m => Util.IsEqualsNormalizedPath(m.Path, path));
+            return movieRepository.GetAll().ToList().Any(m => Util.IsEqualsNormalizedPath(m.Path, path));
         }
 
         public void InsertMovie(Movie movie)
@@ -124,7 +124,7 @@ namespace XMovie.Models.Repository
         #region Category
         public IList<TagCategory> GetAllCategories()
         {
-            return tagCategoryRepository.GetAll();
+            return tagCategoryRepository.GetAll().ToList();
         }
 
         public bool IsExistCategory(string name)
@@ -145,10 +145,10 @@ namespace XMovie.Models.Repository
 
             // 2. TagMapsから削除
             var deleteTagMaps = tagMapRepository.FindAll(tm => deleteTagIds.Contains(tm.TagId));
-            tagMapRepository.DeleteRange(deleteTagMaps);
+            tagMapRepository.DeleteRange(deleteTagMaps.ToList());
 
             // 3. Tagsから削除
-            tagRepository.DeleteRange(deleteTags);
+            tagRepository.DeleteRange(deleteTags.ToList());
 
             // 4. Categoryを削除
             tagCategoryRepository.Delete(tagCategoryRepository.Find(categoryId));
@@ -158,7 +158,7 @@ namespace XMovie.Models.Repository
         #region Tag
         public IList<Tag> FindCategoryTags(int categoryId)
         {
-            return tagRepository.FindAll(t => t.TagCategoryId == categoryId);
+            return tagRepository.FindAll(t => t.TagCategoryId == categoryId).ToList();
         }
 
         public Tag InsertNewTag(string tagName, int tagCategoryId)
@@ -170,13 +170,23 @@ namespace XMovie.Models.Repository
         {
             var tagIdList = tagMapRepository.FindAll(tm => movieIdList.Contains(tm.MovieId)).Select(tm => tm.TagId);
             return tagRepository.FindAll(t => tagIdList.Contains(t.TagId)).Distinct().ToList();
-                                
         }
 
         public IList<Tag> FindMovieTags(IList<string> movieIdList, int categoryId)
         {
             var tagIdList = tagMapRepository.FindAll(tm => movieIdList.Contains(tm.MovieId)).Select(tm => tm.TagId);
             return tagRepository.FindAll(t => tagIdList.Contains(t.TagId) && t.TagCategoryId == categoryId).Distinct().ToList();
+        }
+
+        public IList<Tag> FindUnusedTags()
+        {
+            var usedTagId = tagMapRepository.GetAll().GroupBy(tm => tm.TagId).Select(g => g.Key);
+            return tagRepository.FindAll(t => !usedTagId.Contains(t.TagId)).ToList();
+        }
+
+        public void RemoveTags(IList<Tag> tags)
+        {
+            tagRepository.DeleteRange(tags);
         }
         #endregion
 
@@ -193,19 +203,19 @@ namespace XMovie.Models.Repository
         public void RemoveMovieTagMaps(string movieId)
         {
             var tagMaps = tagMapRepository.FindAll(tm => tm.MovieId.Equals(movieId));
-            tagMapRepository.DeleteRange(tagMaps);
+            tagMapRepository.DeleteRange(tagMaps.ToList());
         }
         #endregion
 
         #region Thumbnail
         public IList<Thumbnail> FindMovieThumbnails(string movieId)
         {
-            return thumbnailRepository.FindMovieThumbnails(movieId);
+            return thumbnailRepository.FindMovieThumbnails(movieId).ToList();
         }
 
         public IList<Thumbnail> FindAllThumbnails(Expression<Func<Thumbnail, bool>> predicate)
         {
-            return thumbnailRepository.FindAll(predicate);
+            return thumbnailRepository.FindAll(predicate).ToList();
         }
 
         public void RemoveMovieThumbnails(string movieId)

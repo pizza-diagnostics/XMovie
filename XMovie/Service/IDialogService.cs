@@ -11,7 +11,7 @@ namespace XMovie.Service
     {
         Task<bool> ShowConfirmDialog(string title, string message);
 
-        void ShowSettingWindow();
+        Task ShowMessageDialog(string title, string message);
 
         string ShowFolderDialog(string title, string basePath);
     }

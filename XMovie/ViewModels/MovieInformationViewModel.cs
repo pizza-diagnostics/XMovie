@@ -73,33 +73,29 @@ namespace XMovie.ViewModels
         {
             get
             {
-                if (addNewCategoryCommand == null)
+                return addNewCategoryCommand ?? (addNewCategoryCommand = new RelayCommand((param) =>
                 {
-                    addNewCategoryCommand = new RelayCommand((param) =>
+                    string categoryName = (string)param;
+                    using (var repos = new RepositoryService())
                     {
-                        string categoryName = (string)param;
-                        using (var repos = new RepositoryService())
+                        if (repos.IsExistCategory(categoryName))
                         {
-                            if (repos.IsExistCategory(categoryName))
-                            {
-                                SetError("AddnewCategoryCommand", $"{categoryName}は登録済みです。");
-                            }
-                            else
-                            {
-                                var category = repos.InsertNewCategory(categoryName);
-
-                                Tags.Add(new TagViewModel(dialogService)
-                                {
-                                    TagCategoryId = category.TagCategoryId,
-                                    CategoryName = category.Name
-                                });
-                            }
-                            NewCategoryName = "";
+                            SetError("AddnewCategoryCommand", $"{categoryName}は登録済みです。");
                         }
-                        SelectedMovies = selectedMovies;
-                    });
-                }
-                return addNewCategoryCommand;
+                        else
+                        {
+                            var category = repos.InsertNewCategory(categoryName);
+
+                            Tags.Add(new TagViewModel(dialogService)
+                            {
+                                TagCategoryId = category.TagCategoryId,
+                                CategoryName = category.Name
+                            });
+                        }
+                        NewCategoryName = "";
+                    }
+                    SelectedMovies = selectedMovies;
+                }));
             }
         }
 
@@ -118,21 +114,17 @@ namespace XMovie.ViewModels
         {
             get
             {
-                if (addTagCommand == null)
+                return addTagCommand ?? (addTagCommand = new RelayCommand((param) =>
                 {
-                    addTagCommand = new RelayCommand((param) =>
+                    var tagParam = (Tag)param;
+                    foreach (TagViewModel tag in Tags)
                     {
-                        var tagParam = (Tag)param;
-                        foreach (TagViewModel tag in Tags)
+                        if (tag.TagCategoryId == tagParam.TagCategoryId)
                         {
-                            if (tag.TagCategoryId == tagParam.TagCategoryId)
-                            {
-                                tag.AddTagCommand.Execute(param);
-                            }
+                            tag.AddTagCommand.Execute(param);
                         }
-                    });
-                }
-                return addTagCommand;
+                    }
+                }));
             }
         }
 
@@ -141,17 +133,13 @@ namespace XMovie.ViewModels
         {
             get
             {
-                if (removeTagCommand == null)
+                return removeTagCommand ?? (removeTagCommand = new RelayCommand((param) =>
                 {
-                    removeTagCommand = new RelayCommand((param) =>
+                    foreach (TagViewModel tag in Tags)
                     {
-                        foreach (TagViewModel tag in Tags)
-                        {
-                            tag.RemoveTagCommand.Execute(param);
-                        }
-                    });
-                }
-                return removeTagCommand;
+                        tag.RemoveTagCommand.Execute(param);
+                    }
+                }));
             }
         }
 
@@ -160,23 +148,19 @@ namespace XMovie.ViewModels
         {
             get
             {
-                if (removeCategoryCommand == null)
+                return removeCategoryCommand ?? (removeCategoryCommand = new RelayCommand((param) =>
                 {
-                    removeCategoryCommand = new RelayCommand((param) =>
+                    var tagViewModel = (TagViewModel)param;
+                    var categoryId = tagViewModel.TagCategoryId;
+
+                    using (var repos = new RepositoryService())
                     {
-                        var tagViewModel = (TagViewModel)param;
-                        var categoryId = tagViewModel.TagCategoryId;
+                        repos.RemoveTagCategory(categoryId);
+                    }
 
-                        using (var repos = new RepositoryService())
-                        {
-                            repos.RemoveTagCategory(categoryId);
-                        }
+                    Tags.Remove(Tags.Where(t => t.TagCategoryId == categoryId).FirstOrDefault());
 
-                        Tags.Remove(Tags.Where(t => t.TagCategoryId == categoryId).FirstOrDefault());
-
-                    });
-                }
-                return removeCategoryCommand;
+                }));
             }
         }
 

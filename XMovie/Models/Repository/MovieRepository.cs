@@ -39,24 +39,22 @@ namespace XMovie.Models.Repository
             return  movies.Where(m => Util.IsEqualsNormalizedPath(path, m.Path)).FirstOrDefault();
         }
 
-        public IList<Movie> FindMovies(Expression<Func<Movie, bool>> predicate, SortDescriptor sort)
+        public IQueryable<Movie> FindMovies(Expression<Func<Movie, bool>> predicate, SortDescriptor sort)
         {
-            return sort.MovieSort(dbSet.Where(predicate)).ToList();
+            return sort.MovieSort(dbSet.Where(predicate));
         }
 
-        public IList<Movie> FindDuplicateMovies(SortDescriptor sort)
+        public IQueryable<Movie> FindDuplicateMovies(SortDescriptor sort)
         {
             var md5list = from m in dbSet
                           group m by m.MD5Sum into grouped
                           where grouped.Count() > 1
                           select grouped.Key;
 
-            var movies = sort.MovieSort(dbSet.Where(m => md5list.Contains(m.MD5Sum)));
-
-            return movies.ToList();
+            return sort.MovieSort(dbSet.Where(m => md5list.Contains(m.MD5Sum)));
         }
 
-        public IList<Movie> FindMoviesByPathKeys(List<string> pathKeys, SortDescriptor sort)
+        public IQueryable<Movie> FindMoviesByPathKeys(List<string> pathKeys, SortDescriptor sort)
         {
             //context.Database.Log = s => System.Diagnostics.Debug.Print(s);
 
@@ -70,9 +68,7 @@ namespace XMovie.Models.Repository
 
             q += sort.GetOrderByString();
 
-            var movies = context.Database.SqlQuery<Movie>(q, pathKeys.Select(k => $"%{k}%").ToArray());
-
-            return movies.ToList();
+            return context.Database.SqlQuery<Movie>(q, pathKeys.Select(k => $"%{k}%").ToArray()).AsQueryable<Movie>();
         }
 
         #endregion

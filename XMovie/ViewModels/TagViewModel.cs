@@ -42,7 +42,7 @@ namespace XMovie.ViewModels
 
         #region Tags
 
-        private void UpdateCategoryTags()
+        public void UpdateCategoryTags()
         {
             using (var repo = new RepositoryService())
             {
@@ -102,24 +102,20 @@ namespace XMovie.ViewModels
         {
             get
             {
-                if (addTagCommand == null)
+                return addTagCommand ?? (addTagCommand = new RelayCommand((param) =>
                 {
-                    addTagCommand = new RelayCommand((param) =>
+                    var tag = (Tag)param;
+                    var targetMovieIdList = SelectedMovies.Select(m => m.MovieId);
+
+                    using (var repos = new RepositoryService())
                     {
-                        var tag = (Tag)param;
-                        var targetMovieIdList = SelectedMovies.Select(m => m.MovieId);
+                        repos.SetTagToMovies(tag, targetMovieIdList.ToList());
+                    }
 
-                        using (var repos = new RepositoryService())
-                        {
-                            repos.SetTagToMovies(tag, targetMovieIdList.ToList());
-                        }
-
-                        UpdateSelectedMovieTags();
-                        UpdateCategoryTags();
-                        AddTagText = ""; // inputのクリア 
-                    });
-                }
-                return addTagCommand;
+                    UpdateSelectedMovieTags();
+                    UpdateCategoryTags();
+                    AddTagText = ""; // inputのクリア 
+                }));
             }
         }
 
@@ -128,23 +124,19 @@ namespace XMovie.ViewModels
         {
             get
             {
-                if (removeTagCommand == null)
+                return removeTagCommand ?? (removeTagCommand = new RelayCommand((param) =>
                 {
-                    removeTagCommand = new RelayCommand((param) =>
+                    var tagId = ((Tag)param).TagId;
+                    var movieIdList = selectedMovies.Select(m => m.MovieId).ToList();
+
+                    using (var repo = new RepositoryService())
                     {
-                        var tagId = ((Tag)param).TagId;
-                        var movieIdList = selectedMovies.Select(m => m.MovieId).ToList();
+                        repo.RemoveTagMaps(tagId, movieIdList);
+                    }
 
-                        using (var repo = new RepositoryService())
-                        {
-                            repo.RemoveTagMaps(tagId, movieIdList);
-                        }
-
-                        UpdateSelectedMovieTags();
-                        UpdateCategoryTags();
-                    });
-                }
-                return removeTagCommand;
+                    UpdateSelectedMovieTags();
+                    UpdateCategoryTags();
+                }));
             }
         }
 
@@ -153,14 +145,10 @@ namespace XMovie.ViewModels
         {
             get
             {
-                if (removeCategoryCommand == null)
+                return removeCategoryCommand ?? (removeCategoryCommand = new RelayCommand(async (param) =>
                 {
-                    removeCategoryCommand = new RelayCommand(async (param) =>
-                    {
-                        var result = await this.dialogService.ShowConfirmDialog("foo", "bar");
-                    });
-                }
-                return removeCategoryCommand;
+                    var result = await this.dialogService.ShowConfirmDialog("foo", "bar");
+                }));
             }
         }
         #endregion

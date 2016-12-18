@@ -1,0 +1,127 @@
+﻿<UserControl x:Class="XMovie.Controls.FileExtensionSettingControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:metro="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+             xmlns:local="clr-namespace:XMovie.Controls"
+             mc:Ignorable="d" 
+             d:DesignHeight="300" d:DesignWidth="300">
+    <Grid>
+        <StackPanel Orientation="Vertical">
+            
+        <GroupBox Header="Default">
+            <ListBox ItemsSource="{Binding DefaultMovieExtensions}">
+                <ListBox.Template>
+                    <ControlTemplate>
+                        <DockPanel LastChildFill="True">
+                            <Grid DockPanel.Dock="Top" Height="30" >
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="40" />
+                                    <ColumnDefinition Width="60" />
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0">有効</Label>
+                                <Label Grid.Column="1">拡張子</Label>
+                            </Grid>
+                            <ItemsPresenter />
+                        </DockPanel>
+                    </ControlTemplate>
+                </ListBox.Template>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="40" />
+                                <ColumnDefinition Width="60" />
+                            </Grid.ColumnDefinitions>
+                            <CheckBox Grid.Column="0" IsChecked="{Binding IsEnabled}" />
+                            <TextBlock Grid.Column="1" Text="{Binding Ext}" />
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            
+        </GroupBox>
+        <GroupBox Header="Custom">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition />
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <ListBox ItemsSource="{Binding CustomMovieExtensions}">
+                    <ListBox.Template>
+                        <ControlTemplate>
+                            <DockPanel LastChildFill="True">
+                                <Grid DockPanel.Dock="Top" Height="30" >
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="40" />
+                                        <ColumnDefinition Width="60" />
+                                        <ColumnDefinition Width="40" />
+                                    </Grid.ColumnDefinitions>
+                                    <Label Grid.Column="0">有効</Label>
+                                    <Label Grid.Column="1">拡張子</Label>
+                                    <Label Grid.Column="2">削除</Label>
+                                </Grid>
+                                <ItemsPresenter />
+                            </DockPanel>
+                        </ControlTemplate>
+                    </ListBox.Template>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="40" />
+                                    <ColumnDefinition Width="60" />
+                                    <ColumnDefinition Width="30" />
+                                </Grid.ColumnDefinitions>
+                                <CheckBox Grid.Column="0" IsChecked="{Binding IsEnabled}" />
+                                <TextBlock Grid.Column="1" Text="{Binding Ext}" />
+                                <Button Grid.Column="2" BorderThickness="0"
+                                        Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                                        Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type local:FileExtensionSettingControl}},Path=DataContext.RemoveMovieExtensionCommand}"
+                                        CommandParameter="{Binding .}">
+                                    <Rectangle Width="10" Height="10" >
+                                        <Rectangle.Fill>
+                                            <VisualBrush Stretch="Fill"
+                                                         Visual="{StaticResource appbar_close}" />
+                                        </Rectangle.Fill>
+                                    </Rectangle>
+                                </Button>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBox x:Name="NewMovieExtensionTextBox"
+                             metro:TextBoxHelper.Watermark="新しい拡張子"
+                             Margin="5"
+                             Text="{Binding NewMovieExtension, UpdateSourceTrigger=PropertyChanged}">
+                        <TextBox.InputBindings>
+                            <KeyBinding Command="{Binding AddMovieExtensionCommand}"
+                                            Key="Return"
+                                            CommandParameter="{Binding ElementName=NewMovieExtensionTextBox,Path=Text}" />
+                        </TextBox.InputBindings>
+                    </TextBox>
+                    <Button Grid.Column="1" Margin="5,5,20,5"
+                            Command="{Binding AddMovieExtensionCommand}"
+                            Width="30"
+                            Height="30"
+                            Padding="0">
+                        <Rectangle Width="20" Height="20">
+                            <Rectangle.Fill>
+                                <VisualBrush Stretch="Fill" Visual="{StaticResource appbar_arrow_up}" />
+                            </Rectangle.Fill>
+                        </Rectangle>
+                    </Button>
+                </Grid>
+            </Grid>
+            
+        </GroupBox>
+        </StackPanel>
+    </Grid>
+</UserControl>

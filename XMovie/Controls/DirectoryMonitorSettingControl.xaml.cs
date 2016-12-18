@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,23 +12,16 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using MahApps.Metro.Controls;
-using XMovie.Common;
 
-namespace XMovie
+namespace XMovie.Controls
 {
     /// <summary>
-    /// MainWindow.xaml の相互作用ロジック
+    /// DirectoryMonitorSettingControl.xaml の相互作用ロジック
     /// </summary>
-    public partial class MainWindow : MetroWindow
+    public partial class DirectoryMonitorSettingControl : UserControl
     {
-        private Logger logger = Logger.Instace;
-
-        public MainWindow()
+        public DirectoryMonitorSettingControl()
         {
-            // InitializeComponent前にDataContextを設定しておくとLoadedが呼ばれる?
-            DataContext = new ViewModels.MainWindowViewModel(new Service.MetroDialogService());
-
             InitializeComponent();
         }
     }

@@ -217,59 +217,50 @@ namespace XMovie.ViewModels
         }
 
         #region Command
-        private RelayCommand changeRankCommand;
+        private ICommand changeRankCommand;
         public ICommand ChangeRankCommand
         {
             get
             {
-                if (changeRankCommand == null)
+                return changeRankCommand ?? (changeRankCommand = new RelayCommand((param) =>
                 {
-                    changeRankCommand = new RelayCommand((param) =>
+                    using (var repos = new RepositoryService())
                     {
-                        using (var repos = new RepositoryService())
+                        int r = (int)param;
+                        var movie = repos.ApplyMovie(MovieId, (m => m.Rank += r));
+                        if (movie != null)
                         {
-                            int r = (int)param;
-                            var movie = repos.ApplyMovie(MovieId, (m => m.Rank += r));
-                            if (movie != null)
-                            {
-                                Rank = movie.Rank;
-                            }
+                            Rank = movie.Rank;
                         }
-                    });
-                }
-                return changeRankCommand;
-
+                    }
+                }));
             }
         }
 
-        private RelayCommand playMovieCommand;
+        private ICommand playMovieCommand;
         public ICommand PlayMovieCommand
         {
             get
             {
-                if (playMovieCommand == null)
+                return playMovieCommand ?? (playMovieCommand = new RelayCommand(param =>
                 {
-                    playMovieCommand = new RelayCommand(param =>
+                    try
                     {
-                        try
+                        System.Diagnostics.Process.Start(Path);
+                        using (var repos = new RepositoryService())
                         {
-                            System.Diagnostics.Process.Start(Path);
-                            using (var repos = new RepositoryService())
+                            var movie = repos.ApplyMovie(MovieId, (m => ++m.PlayCount));
+                            if (movie != null)
                             {
-                                var movie = repos.ApplyMovie(MovieId, (m => ++m.PlayCount));
-                                if (movie != null)
-                                {
-                                    PlayCount = movie.PlayCount;
-                                }
+                                PlayCount = movie.PlayCount;
                             }
                         }
-                        catch (Exception ex)
-                        {
-                            logger.Error(ex);
-                        }
-                    });
-                }
-                return playMovieCommand;
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Error(ex);
+                    }
+                }));
             }
         }
 
@@ -278,20 +269,16 @@ namespace XMovie.ViewModels
         {
             get
             {
-                if (addTagCommand == null)
+                return addTagCommand ?? (addTagCommand = new RelayCommand((param) =>
                 {
-                    addTagCommand = new RelayCommand((param) =>
+                    var tagParam = (Tag)param;
+                    var isExist = Tags.Any(t => t.TagId == tagParam.TagId);
+                    if (!isExist)
                     {
-                        var tagParam = (Tag)param;
-                        var isExist = Tags.Any(t => t.TagId == tagParam.TagId);
-                        if (!isExist)
-                        {
-                            // TODO: 冗長
-                            UpdateTags();
-                        }
-                    });
-                }
-                return addTagCommand;
+                        // TODO: 冗長
+                        UpdateTags();
+                    }
+                }));
             }
         }
 
@@ -300,15 +287,11 @@ namespace XMovie.ViewModels
         {
             get
             {
-                if (removeTagCommand == null)
+                return removeTagCommand ?? (removeTagCommand = new RelayCommand((param) =>
                 {
-                    removeTagCommand = new RelayCommand((param) =>
-                    {
-                        var remove = Tags.Where(t => t.TagId == ((Tag)param).TagId).FirstOrDefault();
-                        Tags.Remove(remove);
-                    });
-                }
-                return removeTagCommand;
+                    var remove = Tags.Where(t => t.TagId == ((Tag)param).TagId).FirstOrDefault();
+                    Tags.Remove(remove);
+                }));
             }
         }
 
@@ -317,11 +300,7 @@ namespace XMovie.ViewModels
         {
             get
             {
-                if (beginRenameCommand == null)
-                {
-                    beginRenameCommand = new RelayCommand((param) => { IsRenameMode = true; });
-                }
-                return beginRenameCommand;
+                return beginRenameCommand ?? (beginRenameCommand = new RelayCommand((param) => { IsRenameMode = true; }));
             }
         }
 
@@ -330,50 +309,46 @@ namespace XMovie.ViewModels
         {
             get
             {
-                if (renameCommand == null)
+                return renameCommand ?? (renameCommand = new RelayCommand((param) =>
                 {
-                    renameCommand = new RelayCommand((param) =>
+                    string newFileName = (string)param;
+                    var invalidChars = System.IO.Path.GetInvalidFileNameChars();
+                    if (newFileName.Any(c => invalidChars.Contains(c)))
                     {
-                        string newFileName = (string)param;
-                        var invalidChars = System.IO.Path.GetInvalidFileNameChars();
-                        if (newFileName.Any(c => invalidChars.Contains(c)))
-                        {
-                            logger.Error("ファイル名に使用できない文字が含まれています。");
-                            IsRenameMode = true;
-                            return;
-                        }
+                        logger.Error("ファイル名に使用できない文字が含まれています。");
+                        IsRenameMode = true;
+                        return;
+                    }
 
-                        var ext = System.IO.Path.GetExtension(Path);
-                        var destPath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Path), newFileName + ext);
-                        DirectoryMonitor.Instance.PauseMonitor();
-                        try
-                        {
-                            File.Move(Path, destPath);
-                        }
-                        catch (Exception ex)
-                        {
-                            logger.Error(ex);
-                            IsRenameMode = true;
-                        }
-                        finally
-                        {
-                            DirectoryMonitor.Instance.ResumeMonitor();
-                        }
+                    var ext = System.IO.Path.GetExtension(Path);
+                    var destPath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Path), newFileName + ext);
+                    DirectoryMonitor.Instance.PauseMonitor();
+                    try
+                    {
+                        File.Move(Path, destPath);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Error(ex);
+                        IsRenameMode = true;
+                    }
+                    finally
+                    {
+                        DirectoryMonitor.Instance.ResumeMonitor();
+                    }
 
-                        IsRenameMode = false;
+                    IsRenameMode = false;
 
-                        using (var repos = new RepositoryService())
+                    using (var repos = new RepositoryService())
+                    {
+                        var movie = repos.ApplyMovie(MovieId, (m => m.Path = destPath));
+                        if (movie != null)
                         {
-                            var movie = repos.ApplyMovie(MovieId, (m => m.Path = destPath));
-                            if (movie != null)
-                            {
-                                logger.Information($"ファイル名を変更しました。{Path} -> {destPath}");
-                                Path = destPath;
-                            }
+                            logger.Information($"ファイル名を変更しました。{Path} -> {destPath}");
+                            Path = destPath;
                         }
-                    });
-                }
-                return renameCommand;
+                    }
+                }));
             }
         }
 
@@ -382,14 +357,7 @@ namespace XMovie.ViewModels
         {
             get
             {
-                if (renameCancelCommand == null)
-                {
-                    renameCancelCommand = new RelayCommand((param) =>
-                    {
-                        IsRenameMode = false;
-                    });
-                }
-                return renameCancelCommand;
+                return renameCancelCommand ?? (renameCancelCommand = new RelayCommand((param) => { IsRenameMode = false; }));
             }
         }
 
@@ -398,21 +366,17 @@ namespace XMovie.ViewModels
         {
             get
             {
-                if (openMovieDirectoryCommand == null)
+                return openMovieDirectoryCommand ?? (openMovieDirectoryCommand = new RelayCommand((param) =>
                 {
-                    openMovieDirectoryCommand = new RelayCommand((param) =>
+                    try
                     {
-                        try
-                        {
-                            System.Diagnostics.Process.Start("explorer.exe", $"/select, \"{Path}\"");
-                        }
-                        catch (Exception ex)
-                        {
-                            logger.Error(ex);
-                        }
-                    });
-                }
-                return openMovieDirectoryCommand;
+                        System.Diagnostics.Process.Start("explorer.exe", $"/select, \"{Path}\"");
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Error(ex);
+                    }
+                }));
             }
         }
 
@@ -421,33 +385,28 @@ namespace XMovie.ViewModels
         {
             get
             {
-                if (updateThumbnailCommand == null)
+                return updateThumbnailCommand ?? (updateThumbnailCommand = new RelayCommand((param) =>
                 {
-                    updateThumbnailCommand = new RelayCommand((param) =>
+                    var model = (MovieItemViewModel)param;
+                    model.IsEnabled = false;
+
+                    using (var repos = new RepositoryService())
                     {
-                        var model = (MovieItemViewModel)param;
-                        model.IsEnabled = false;
-
-                        using (var repos = new RepositoryService())
+                        var movie = repos.FindMovie(model.MovieId);
+                        if (movie != null)
                         {
-                            var movie = repos.FindMovie(model.MovieId);
-                            if (movie != null)
-                            {
-                                repos.RemoveMovieThumbnails(model.MovieId);
-                                var importer = new MovieImporter();
-                                importer.UpdateMovieThumbnails(model.Path, Util.MovieThumbnailDirectory, movie);
-                                repos.UpdateMovie(movie);
-                                OnPropertyChanged("ThumbnailImage");
-                            }
+                            repos.RemoveMovieThumbnails(model.MovieId);
+                            var importer = new MovieImporter();
+                            importer.UpdateMovieThumbnails(model.Path, Util.MovieThumbnailDirectory, movie);
+                            repos.UpdateMovie(movie);
+                            OnPropertyChanged("ThumbnailImage");
                         }
+                    }
 
-                        model.IsEnabled = true;
-                    });
-                }
-                return updateThumbnailCommand;
+                    model.IsEnabled = true;
+                }));
             }
         }
         #endregion
-
     }
 }

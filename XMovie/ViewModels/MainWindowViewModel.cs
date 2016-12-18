@@ -26,6 +26,8 @@ namespace XMovie.ViewModels
 
         public LogListViewModel Logs { get; private set; } = new LogListViewModel();
 
+        public ToolViewModel ToolModel { get; set; }
+
         private IDialogService dialogService;
         private MovieDispatcher movieDispatcher = new MovieDispatcher();
 
@@ -35,6 +37,7 @@ namespace XMovie.ViewModels
         {
             this.dialogService = dialogService;
             MovieInformation = new MovieInformationViewModel(dialogService);
+            ToolModel = new ToolViewModel(dialogService);
 
             Application.Current.Dispatcher.ShutdownStarted += (s, e) => { isShutdown = true; };
 
@@ -72,6 +75,7 @@ namespace XMovie.ViewModels
         }
 
         #region Properties
+
         public int ThumbnailCount
         {
             get { return Settings.ThumbnailCount; }
@@ -219,76 +223,56 @@ namespace XMovie.ViewModels
         #endregion
 
         #region Command
-        private RelayCommand windowClosingCommand;
+        private ICommand windowClosingCommand;
         public ICommand WindowClosingCommand
         {
             get
             {
-                if (windowClosingCommand == null)
-                {
-                    windowClosingCommand = new RelayCommand((param) =>
-                    {
-                        UserSettingManager.Instance.Save();
-                    });
-                }
-                return windowClosingCommand;
-
+                return windowClosingCommand ?? (windowClosingCommand = new RelayCommand((param) => { UserSettingManager.Instance.Save(); }));
             }
         }
 
-        private RelayCommand fileDropCommand;
+        private ICommand fileDropCommand;
         public ICommand FileDropCommand
         {
             get
             {
-                if (fileDropCommand == null)
+                return fileDropCommand ?? (fileDropCommand = new RelayCommand(async (param) =>
                 {
-                    fileDropCommand = new RelayCommand(async (parameter) =>
+                    await Task.Run(async () =>
                     {
-                        await Task.Run(async () =>
+                        var files = param as string[];
+                        if (files != null)
                         {
-                            var files = parameter as string[];
-                            if (files != null)
+                            var exts = UserSettingManager.Instance.GetUserSettings().GetImportableMovieExtensions(); ;
+                            var importer = new MovieImporter();
+                            foreach (var file in files)
                             {
-                                var exts = UserSettingManager.Instance.GetUserSettings().GetImportableMovieExtensions(); ;
-                                var importer = new MovieImporter();
-                                foreach (var file in files)
+                                if (Directory.Exists(file))
                                 {
-                                    if (Directory.Exists(file))
-                                    {
-                                        // 監視ディレクトリとして追加
-                                        AddDirectoryMonitor(file);
-                                        continue;
-                                    }
-                                    if (!exts.Contains(Path.GetExtension(file).ToLower()))
-                                    {
-                                        logger.Warning($"対応していない拡張子です。{file}");
-                                        continue;
-                                    }
-                                    await movieDispatcher.ImportMovie(file, Movies);
+                                    // 監視ディレクトリとして追加
+                                    AddDirectoryMonitor(file);
+                                    continue;
                                 }
+                                if (!exts.Contains(Path.GetExtension(file).ToLower()))
+                                {
+                                    logger.Warning($"対応していない拡張子です。{file}");
+                                    continue;
+                                }
+                                await movieDispatcher.ImportMovie(file, Movies);
                             }
-                        });
-
+                        }
                     });
-                }
-                return fileDropCommand;
+                }));
             }
         }
 
-        private RelayCommand searchCommand;
+        private ICommand searchCommand;
         public ICommand SearchCommand
         {
             get
             {
-                if (searchCommand == null)
-                {
-                    searchCommand = new RelayCommand((parameter) =>
-                    {
-                        SearchMovies((string)parameter);
-                    });
-                }
-                return searchCommand;
+                return searchCommand ?? (searchCommand = new RelayCommand((param) => { SearchMovies((string)param); }));
             }
         }
 
@@ -297,15 +281,11 @@ namespace XMovie.ViewModels
         {
             get
             {
-                if (tagSearchCommand == null)
+                return tagSearchCommand ?? (tagSearchCommand = new RelayCommand((param) =>
                 {
-                    tagSearchCommand = new RelayCommand((param) =>
-                    {
-                        IsFileSearch = false;
-                        SearchMovies(((Tag)param).Name);
-                    });
-                }
-                return tagSearchCommand;
+                    IsFileSearch = false;
+                    SearchMovies(((Tag)param).Name);
+                }));
             }
         }
 
@@ -314,26 +294,23 @@ namespace XMovie.ViewModels
         {
             get
             {
-                if (addTagCommand == null)
+                return addTagCommand ?? (addTagCommand = new RelayCommand((param) =>
                 {
-                    addTagCommand = new RelayCommand((param) =>
-                    {
-                        var tagParameter = (TagCommandParameter)param;
-                        if (String.IsNullOrWhiteSpace(tagParameter.Name))
-                            return;
+                    var tagParameter = (TagCommandParameter)param;
+                    if (String.IsNullOrWhiteSpace(tagParameter.Name))
+                        return;
 
-                        using (var repos = new RepositoryService())
+                    using (var repos = new RepositoryService())
+                    {
+                        var tag = repos.InsertNewTag(tagParameter.Name, tagParameter.TagCategoryId);
+                        MovieInformation.AddTagCommand.Execute(tag);
+                        foreach (MovieItemViewModel movie in MovieInformation.SelectedMovies)
                         {
-                            var tag = repos.InsertNewTag(tagParameter.Name, tagParameter.TagCategoryId);
-                            MovieInformation.AddTagCommand.Execute(tag);
-                            foreach (MovieItemViewModel movie in MovieInformation.SelectedMovies)
-                            {
-                                movie.AddTagCommand.Execute(tag);
-                            }
+                            movie.AddTagCommand.Execute(tag);
                         }
-                    });
-                }
-                return addTagCommand;
+                    }
+ 
+                }));
             }
         }
 
@@ -342,18 +319,14 @@ namespace XMovie.ViewModels
         {
             get
             {
-                if (removeTagCommand == null)
+                return removeTagCommand ?? (removeTagCommand = new RelayCommand((param) =>
                 {
-                    removeTagCommand = new RelayCommand((param) =>
+                    MovieInformation.RemoveTagCommand.Execute(param);
+                    foreach (MovieItemViewModel movie in MovieInformation.SelectedMovies)
                     {
-                        MovieInformation.RemoveTagCommand.Execute(param);
-                        foreach (MovieItemViewModel movie in MovieInformation.SelectedMovies)
-                        {
-                            movie.RemoveTagCommand.Execute(param);
-                        }
-                    });
-                }
-                return removeTagCommand;
+                        movie.RemoveTagCommand.Execute(param);
+                    }
+                }));
             }
         }
 
@@ -362,43 +335,23 @@ namespace XMovie.ViewModels
         {
             get
             {
-                if (removeCategoryCommand == null)
+                return removeTagCommand ?? (removeCategoryCommand = new RelayCommand(async (param) =>
                 {
-                    removeCategoryCommand = new RelayCommand(async (param) =>
+                    var result = await dialogService.ShowConfirmDialog("カテゴリの削除",
+                        "カテゴリを削除しますか?\n(全ての動画からカテゴリに属するすべてのタグが削除されます。)");
+                    if (result)
                     {
-                        var result = await dialogService.ShowConfirmDialog("カテゴリの削除",
-                            "カテゴリを削除しますか?\n(全ての動画からカテゴリに属するすべてのタグが削除されます。)");
-                        if (result)
+                        MovieInformation.RemoveCategoryCommand.Execute(param);
+                        if (MovieInformation.SelectedMovies != null)
                         {
-                            MovieInformation.RemoveCategoryCommand.Execute(param);
-                            if (MovieInformation.SelectedMovies != null)
+                            foreach (MovieItemViewModel movie in MovieInformation.SelectedMovies)
                             {
-                                foreach (MovieItemViewModel movie in MovieInformation.SelectedMovies)
-                                {
-                                    movie.UpdateTags();
-                                }
-
+                                movie.UpdateTags();
                             }
-                        }
-                    });
-                }
-                return removeCategoryCommand;
-            }
-        }
 
-        private ICommand settingCommand;
-        public ICommand SettingCommand
-        {
-            get
-            {
-                if (settingCommand == null)
-                {
-                    settingCommand = new RelayCommand((param) =>
-                    {
-                        dialogService.ShowSettingWindow();
-                    });
-                }
-                return settingCommand;
+                        }
+                    }
+                }));
             }
         }
 
@@ -407,22 +360,18 @@ namespace XMovie.ViewModels
         {
             get
             {
-                if (unregisterMovieCommand == null)
+                return unregisterMovieCommand ?? (unregisterMovieCommand = new RelayCommand(async (param) =>
                 {
-                    unregisterMovieCommand = new RelayCommand(async (param) =>
+                    MovieItemViewModel movie = (MovieItemViewModel)param;
+                    movie.IsEnabled = false;
+                    await movieDispatcher.UnregisterMovie(movie.MovieId, Movies);
+                    foreach (MovieItemViewModel m in MovieInformation.SelectedMovies)
                     {
-                        MovieItemViewModel movie = (MovieItemViewModel)param;
-                        movie.IsEnabled = false;
-                        await movieDispatcher.UnregisterMovie(movie.MovieId, Movies);
-                        foreach (MovieItemViewModel m in MovieInformation.SelectedMovies)
-                        {
-                            m.IsEnabled = false;
-                            await movieDispatcher.UnregisterMovie(m.MovieId, Movies);
-                        }
+                        m.IsEnabled = false;
+                        await movieDispatcher.UnregisterMovie(m.MovieId, Movies);
+                    }
 
-                    });
-                }
-                return unregisterMovieCommand;
+                }));
             }
         }
 
@@ -431,47 +380,38 @@ namespace XMovie.ViewModels
         {
             get
             {
-                if (moveMovieCommand == null)
+                return moveMovieCommand ?? (moveMovieCommand = new RelayCommand((param) =>
                 {
-                    moveMovieCommand = new RelayCommand((param) =>
+                    var model = (MovieItemViewModel)param;
+                    var dest = dialogService.ShowFolderDialog("移動先フォルダの選択", Path.GetDirectoryName(model.Path));
+                    if (dest == null)
                     {
-                        var model = (MovieItemViewModel)param;
-                        var dest = dialogService.ShowFolderDialog("移動先フォルダの選択", Path.GetDirectoryName(model.Path));
-                        if (dest == null)
-                        {
-                            return;
-                        }
-                        try
-                        {
-                            dest = Path.Combine(dest, model.FileName);
-                            DirectoryMonitor.Instance.PauseMonitor();
-                            File.Move(model.Path, dest);
-                            logger.Information($"ファイルを移動しました。{model.Path} -> {dest}");
-                        }
-                        catch (Exception ex)
-                        {
-                            logger.Error(ex);
-                            return;
-                        }
-                        finally
-                        {
-                            DirectoryMonitor.Instance.ResumeMonitor();
-                        }
+                        return;
+                    }
+                    try
+                    {
+                        dest = Path.Combine(dest, model.FileName);
+                        DirectoryMonitor.Instance.PauseMonitor();
+                        File.Move(model.Path, dest);
+                        logger.Information($"ファイルを移動しました。{model.Path} -> {dest}");
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Error(ex);
+                        return;
+                    }
+                    finally
+                    {
+                        DirectoryMonitor.Instance.ResumeMonitor();
+                    }
 
-                        model.Path = dest;
+                    model.Path = dest;
 
-                        using (var repo = new RepositoryService())
-                        {
-                            repo.ApplyMovie(model.MovieId, (m => m.Path = dest));
-                        }
-                        /*
-                        var movieRepository = new MovieRepository();
-                        movieRepository.UpdateMovie(model.MovieId, (m => m.Path = dest));
-                        */
-
-                    });
-                }
-                return moveMovieCommand;
+                    using (var repo = new RepositoryService())
+                    {
+                        repo.ApplyMovie(model.MovieId, (m => m.Path = dest));
+                    }
+                }));
             }
         }
 
@@ -480,36 +420,65 @@ namespace XMovie.ViewModels
         {
             get
             {
-                if (removeMovieCommand == null)
+                return removeMovieCommand ?? (removeMovieCommand = new RelayCommand(async (param) =>
                 {
-                    removeMovieCommand = new RelayCommand(async (param) =>
+                    var model = (MovieItemViewModel)param;
+                    var msg = $"{model.Path}を削除しますか?\n(ファイルは完全に削除されます。)";
+                    if (await dialogService.ShowConfirmDialog("ファイルの削除", msg))
                     {
-                        var model = (MovieItemViewModel)param;
-                        var msg = $"{model.Path}を削除しますか?\n(ファイルは完全に削除されます。)";
-                        if (await dialogService.ShowConfirmDialog("ファイルの削除", msg))
+                        model.IsEnabled = false;
+                        await movieDispatcher.UnregisterMovie(model.MovieId, Movies);
+                        try
                         {
-                            model.IsEnabled = false;
-                            await movieDispatcher.UnregisterMovie(model.MovieId, Movies);
-                            try
+                            DirectoryMonitor.Instance.PauseMonitor();
+                            File.Delete(model.Path);
+                            logger.Information($"ファイルを削除しました。{model.Path}");
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.Error($"ファイルが削除できませんでした。{model.Path}");
+                            logger.Error(ex);
+                            return;
+                        }
+                        finally
+                        {
+                            DirectoryMonitor.Instance.ResumeMonitor();
+                        }
+                    }
+                }));
+            }
+        }
+
+        private ICommand removeUnusedTagCommand;
+        public ICommand RemoveUnusedTagCommand
+        {
+            get
+            {
+                return removeUnusedTagCommand ?? (removeUnusedTagCommand = new RelayCommand(async (param) =>
+                {
+                    using (var repos = new RepositoryService())
+                    {
+                        var tags = repos.FindUnusedTags();
+                        if (tags.Count() > 0)
+                        {
+                            var tagStrings = String.Join(",", tags.Select(t => t.Name));
+                            var msg = $"使用されていないタグを削除しますか?\n[{tagStrings}]";
+                            if (await dialogService.ShowConfirmDialog("未使用タグの削除", msg))
                             {
-                                DirectoryMonitor.Instance.PauseMonitor();
-                                File.Delete(model.Path);
-                                logger.Information($"ファイルを削除しました。{model.Path}");
-                            }
-                            catch (Exception ex)
-                            {
-                                logger.Error($"ファイルが削除できませんでした。{model.Path}");
-                                logger.Error(ex);
-                                return;
-                            }
-                            finally
-                            {
-                                DirectoryMonitor.Instance.ResumeMonitor();
+                                repos.RemoveTags(tags);
+                                foreach (var t in MovieInformation.Tags)
+                                {
+                                    t.UpdateCategoryTags();
+                                }
                             }
                         }
-                    });
-                }
-                return removeMovieCommand;
+                        else
+                        {
+                            var msg = "未使用のタグがありません。";
+                            await dialogService.ShowMessageDialog("未使用タグの削除", msg);
+                        }
+                    }
+                }));
             }
         }
         #endregion
@@ -609,7 +578,7 @@ namespace XMovie.ViewModels
                         {
                             Movies.Add(new MovieItemViewModel(movie.MovieId));
                         });
-                        await Task.Delay(5);
+                        await Task.Delay(40);
                     }
                 }
             });
@@ -630,7 +599,7 @@ namespace XMovie.ViewModels
                         {
                             Movies.Add(new MovieItemViewModel(movie.MovieId));
                         });
-                        await Task.Delay(5);
+                        await Task.Delay(40);
                     }
                 }
             });

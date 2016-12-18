@@ -12,23 +12,31 @@ namespace XMovie.Service
 {
     public class MetroDialogService : IDialogService
     {
-        public async Task<bool> ShowConfirmDialog(string title, string message)
+        private MetroDialogSettings GetDialogSettings()
         {
-            var metroWindow = (Application.Current.MainWindow as MetroWindow);
             var setting = new MetroDialogSettings();
             setting.AnimateShow = false;
             setting.AnimateHide = false;
             setting.DefaultButtonFocus = MessageDialogResult.Negative;
+
+            return setting;
+        }
+        public async Task<bool> ShowConfirmDialog(string title, string message)
+        {
+            var metroWindow = (Application.Current.MainWindow as MetroWindow);
+            var setting = GetDialogSettings();
 
             var dialogResult = await metroWindow.ShowMessageAsync(title, message, MessageDialogStyle.AffirmativeAndNegative, setting);
 
             return dialogResult == MessageDialogResult.Affirmative;
         }
 
-        public void ShowSettingWindow()
+        public async Task ShowMessageDialog(string title, string message)
         {
-            var window = new SettingWindow();
-            window.ShowDialog();
+            var metroWindow = (Application.Current.MainWindow as MetroWindow);
+            var setting = GetDialogSettings();
+
+            await metroWindow.ShowMessageAsync(title, message, MessageDialogStyle.Affirmative, setting);
         }
 
         public string ShowFolderDialog(string title, string basePath)

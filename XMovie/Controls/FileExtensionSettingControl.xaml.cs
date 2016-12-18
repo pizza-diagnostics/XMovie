@@ -10,21 +10,18 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
 using System.Windows.Shapes;
-using MahApps.Metro.Controls;
-using XMovie.ViewModels;
-using XMovie.Service;
 
-namespace XMovie
+namespace XMovie.Controls
 {
     /// <summary>
-    /// SettingWindow.xaml の相互作用ロジック
+    /// FileExtensionSettingControl.xaml の相互作用ロジック
     /// </summary>
-    public partial class SettingWindow : MetroWindow
+    public partial class FileExtensionSettingControl : UserControl
     {
-        public SettingWindow()
+        public FileExtensionSettingControl()
         {
-            DataContext = new SettingWindowViewModel(new MetroDialogService());
             InitializeComponent();
         }
     }

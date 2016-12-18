@@ -31,12 +31,69 @@
         </i:EventTrigger>
     </i:Interaction.Triggers>
 
+    <metro:MetroWindow.Resources>
+        <common:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+    </metro:MetroWindow.Resources>
+
+    <metro:MetroWindow.Flyouts>
+        <metro:FlyoutsControl Name="CommonFlyout">
+            <metro:Flyout Header="Tool" Position="Right" Width="350" IsOpen="{Binding ToolModel.IsOpenFlyout}" IsModal="True">
+                <Border Padding="10">
+                    <Grid>
+                        <Grid.RowDefinitions >
+                            <RowDefinition />
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <TabControl>
+                            <TabControl.Resources>
+                                <Style TargetType="{x:Type TabItem}" BasedOn="{StaticResource {x:Type TabItem}}">
+                                    <Setter Property="metro:ControlsHelper.HeaderFontSize" Value="14" />
+                                </Style>
+                            </TabControl.Resources>
+
+
+                            <TabItem Header="Tool">
+                                <StackPanel Orientation="Vertical">
+                                    <Button BorderThickness="1" Command="{Binding RemoveUnusedTagCommand}">未使用タグの削除</Button>
+                                </StackPanel>
+                            </TabItem>
+
+                            <TabItem Header="監視ディレクトリ">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition />
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <ScrollViewer VerticalScrollBarVisibility="Visible">
+                                        <ItemsControl ItemsSource="{Binding ToolModel.DirectoryMonitors}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <controls:DirectoryMonitorSettingControl />
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </ScrollViewer>
+                                </Grid>
+                            </TabItem>
+                            <TabItem Header="動画拡張子">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <controls:FileExtensionSettingControl DataContext="{Binding ToolModel}" />
+                                </ScrollViewer>
+                            </TabItem>
+                        </TabControl>
+                        <StackPanel Orientation="Horizontal" Grid.Row="1" HorizontalAlignment="Right" x:Name="SettingButtons">
+                            <Button Width="60" Margin="5"
+                                Command="{Binding ToolModel.CommitCommand}">OK</Button>
+                            <Button Width="60" Margin="5"
+                                Command="{Binding ToolModel.RollbackCommand}">Cancel</Button>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </metro:Flyout>
+        </metro:FlyoutsControl>
+    </metro:MetroWindow.Flyouts>
 
     <Grid>
-
-        <Grid.Resources>
-            <common:InverseBooleanConverter x:Key="InverseBooleanConverter" />
-        </Grid.Resources>
 
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -62,14 +119,16 @@
                 </metro:SplitButton.Icon>
             </metro:SplitButton>
             <Button Width="30" Height="30" Margin="10,0,0,0" Padding="0" BorderThickness="0"
+                    HorizontalAlignment="Right"
                     Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-                    Command="{Binding SettingCommand}"
+                    Command="{Binding ToolModel.ToolCommand}"
                     >
                 <Rectangle Width="20" Height="20">
                     <Rectangle.Fill>
                         <VisualBrush Stretch="Uniform" Visual="{StaticResource appbar_settings}" />
                     </Rectangle.Fill>
                 </Rectangle>
+                
             </Button>
         </StackPanel>
         
@@ -145,7 +204,9 @@
                          SelectionMode="Extended"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                          VirtualizingPanel.IsVirtualizing="True"
+                         VirtualizingPanel.ScrollUnit="Item"
                          VirtualizingPanel.VirtualizationMode="Recycling"
+                         VirtualizingPanel.IsContainerVirtualizable="True"
                          Padding="0"
                          Margin="0"
                          >
@@ -161,7 +222,10 @@
                     </ListBox.ItemTemplate>
                     <ListBox.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <WrapPanel Orientation="Horizontal" Margin="0"/>
+                        <!--
+                            <VirtualizingStackPanel Orientation="Vertical"  />
+                            -->
+                            <WrapPanel Orientation="Horizontal" Margin="0" VirtualizingPanel.IsVirtualizing="True"/>
                         </ItemsPanelTemplate>
                     </ListBox.ItemsPanel>
                 </ListBox>
