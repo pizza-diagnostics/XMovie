@@ -42,4 +42,4 @@ NuGetより
   + [ウィンドウクローズ(StackOverflow)](http://stackoverflow.com/questions/4376475/wpf-mvvm-how-to-close-a-window)
   + [ContextMenuのCommand Binding(StackOverflow)](http://stackoverflow.com/questions/9994241/mvvm-binding-command-to-contextmenu-item)
   + [ファイル選択状態でexplorerを開く(StackOverflow)](http://stackoverflow.com/questions/334630/opening-a-folder-in-explorer-and-selecting-a-file)
-  
+  + [多重起動時のウィンドウアクティブ化](http://stackoverflow.com/questions/14506406/wpf-single-instance-best-practices)
