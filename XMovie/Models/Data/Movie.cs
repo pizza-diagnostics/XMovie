@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace XMovie.Models
+namespace XMovie.Models.Data
 {
     public class Movie
     {

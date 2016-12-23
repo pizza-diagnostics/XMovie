@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using XMovie.Common;
 
-namespace XMovie.Models
+namespace XMovie.Models.Data
 {
     public class Thumbnail
     {

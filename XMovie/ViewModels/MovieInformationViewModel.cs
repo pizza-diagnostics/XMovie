@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using XMovie.Common;
-using XMovie.Models;
+using XMovie.Models.Data;
 using XMovie.Models.Repository;
 using XMovie.Service;
 

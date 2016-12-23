@@ -4,8 +4,8 @@ using System.Data.Entity;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
-using System.Threading.Tasks;
 using XMovie.Common;
+using XMovie.Models.Data;
 
 namespace XMovie.Models.Repository
 {

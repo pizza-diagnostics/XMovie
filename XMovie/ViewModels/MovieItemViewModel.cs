@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using XMovie.Common;
 using XMovie.Models;
+using XMovie.Models.Data;
 using XMovie.Models.Repository;
 using XMovie.Models.Settings;
 

@@ -4,11 +4,14 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Data;
 using System.Windows.Input;
 using XMovie.Common;
 using XMovie.Models;
+using XMovie.Models.Data;
 using XMovie.Models.Repository;
 using XMovie.Models.Settings;
 using XMovie.Service;
@@ -33,6 +36,8 @@ namespace XMovie.ViewModels
 
         private volatile bool isShutdown = false;
 
+        private SearchRequest searchRequest = new SearchRequest();
+
         public MainWindowViewModel(IDialogService dialogService)
         {
             this.dialogService = dialogService;
@@ -50,10 +55,11 @@ namespace XMovie.ViewModels
                 }
             });
 
-            var smodel = new SearchTagMenuItemViewModel() { Header = "Tags:" };
+            BindingOperations.EnableCollectionSynchronization(Movies, new object());
+
+            var smodel = new SearchTagMenuItemViewModel();
             smodel.CreateTree();
-            SearchTags = new ObservableCollection<SearchTagMenuItemViewModel>();
-            SearchTags.Add(smodel);
+            SearchTags = smodel.MenuItems;
 
             SearchMovies("");
 
@@ -503,6 +509,7 @@ namespace XMovie.ViewModels
                 return setSearchTagCommand ?? (setSearchTagCommand = new RelayCommand((param) =>
                 {
                     SearchKeywords = $"{SearchKeywords} {(string)param}";
+                    SearchMovies(SearchKeywords);
                 }));
             }
         }
@@ -525,7 +532,6 @@ namespace XMovie.ViewModels
         {
             get { return searchKeywords; }
             set { SetProperty(ref searchKeywords, value, "SearchKeywords"); }
-            //get { return Settings.SearchHistories.Count > 0 ? Settings.SearchHistories[0] : ""; }
         }
 
         private void AddSearchHistory(string keywords)
@@ -542,7 +548,6 @@ namespace XMovie.ViewModels
                     Settings.SearchHistories.RemoveAt(Settings.SearchHistories.Count - 1);
                 }
             }
-            //OnPropertyChanged("SearchKeywords");
         }
 
         private async void SearchMovies(string keywords)
@@ -555,80 +560,77 @@ namespace XMovie.ViewModels
             // 検索歴の追加
             AddSearchHistory(keywords);
 
-            IsSearching = true;
-
             var sort = Sorter[Settings.SorterIndex];
             if ("cmd:duplicate".Equals(keywords))
             {
-                SearchDuplicateMovies(sort);
+                await SearchDuplicateMovies(sort);
             }
             else
             {
-                var keys = new List<string>(keywords.Split(new char[] { ',', ' ', '　', '、' }, StringSplitOptions.RemoveEmptyEntries));
+                var keys = new List<string>((keywords ?? "").Split(new char[] { ',', ' ', '　', '、' }, StringSplitOptions.RemoveEmptyEntries));
 
-                if (IsFileSearch)
+                var entry = searchRequest.CreateSearchEntry();
+                await Task.Run(async () =>
                 {
-                    await SearchMoviesWithPath(keys, sort);
-                }
-                else
-                {
-                    await SearchMoviesWithTags(keys, sort);
-                }
+                    try
+                    {
+                        await searchRequest.Entry(entry);
+                        Movies.Clear();
+                        IsSearching = true;
+                        using (var repo = new RepositoryService())
+                        {
+                            var movies = IsFileSearch ? repo.FindMoviesByPathKeys(keys, sort) : repo.FindMoviesByTags(keys, sort);
+                            logger.Information($"{movies.Count()}件見つかりました。[{String.Join(",", keys)}]");
+                            foreach (var movie in movies)
+                            {
+                                Movies.Add(new MovieItemViewModel(movie.MovieId));
+                                if (searchRequest.IsCancelled(entry))
+                                {
+                                    logger.Debug($"検索処理がキャンセルされました。{entry}");
+                                    break;
+                                }
+                                await Task.Delay(40);
+                            }
+                        }
+                    }
+                    finally
+                    {
+                        IsSearching = false;
+                        searchRequest.Release(entry);
+                    }
+                });
             }
-            IsSearching = false;
-
         }
 
-        private void SearchDuplicateMovies(SortDescriptor sort)
+        private async Task SearchDuplicateMovies(SortDescriptor sort)
         {
-            Movies.Clear();
-            using (var repo = new RepositoryService())
-            {
-                foreach (var movie in repo.FindDuplicateMovies(sort))
-                {
-                    Movies.Add(new MovieItemViewModel(movie.MovieId));
-                }
-            }
-        }
-
-        private async Task SearchMoviesWithTags(List<string> tagKeys, SortDescriptor sort)
-        {
-            Movies.Clear();
+            var entry = searchRequest.CreateSearchEntry();
             await Task.Run(async () =>
             {
-                using (var repos = new RepositoryService())
+                try
                 {
-                    var movies = repos.FindMoviesByTags(tagKeys, sort);
-                    logger.Information($"{movies.Count()}件見つかりました。[{String.Join(",", tagKeys)}]");
-                    foreach (var movie in movies)
+                    await searchRequest.Entry(entry);
+                    IsSearching = true;
+                    Movies.Clear();
+
+                    using (var repo = new RepositoryService())
                     {
-                        App.Current.Dispatcher.Invoke(() =>
+                        foreach (var movie in repo.FindDuplicateMovies(sort))
                         {
                             Movies.Add(new MovieItemViewModel(movie.MovieId));
-                        });
-                        await Task.Delay(40);
+                            await Task.Delay(40);
+                            if (searchRequest.IsCancelled(entry))
+                            {
+                                logger.Debug($"検索処理がキャンセルされました。{entry}");
+                                break;
+                            }
+                        }
                     }
                 }
-            });
-        }
-
-        private async Task SearchMoviesWithPath(List<string> pathKeys, SortDescriptor sort)
-        {
-            Movies.Clear();
-            await Task.Run(async () =>
-            {
-                using (var repo = new RepositoryService())
+                finally
                 {
-                    var movies = repo.FindMoviesByPathKeys(pathKeys, sort);
-                    logger.Information($"{movies.Count()}件見つかりました。[{String.Join(",", pathKeys)}]");
-                    foreach (var movie in movies)
-                    {
-                        App.Current.Dispatcher.Invoke(() =>
-                        {
-                            Movies.Add(new MovieItemViewModel(movie.MovieId));
-                        });
-                        await Task.Delay(40);
-                    }
+                    IsSearching = false;
+                    searchRequest.Release(entry);
                 }
             });
         }

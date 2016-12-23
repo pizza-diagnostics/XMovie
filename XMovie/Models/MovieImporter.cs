@@ -7,8 +7,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using XMovie.Common;
+using XMovie.Models.Data;
 using XMovie.Models.Repository;
-using XMovie.Models.Settings;
 
 namespace XMovie.Models
 {

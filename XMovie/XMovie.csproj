@@ -113,6 +113,7 @@
       <HintPath>..\packages\Windows7APICodePack-Shell.1.1.0.0\lib\Microsoft.WindowsAPICodePack.Shell.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="PresentationFramework.Aero2" />
     <Reference Include="SQLite.CodeFirst, Version=1.2.4.16, Culture=neutral, PublicKeyToken=eb96ba0a78d831a7, processorArchitecture=MSIL">
       <HintPath>..\packages\SQLite.CodeFirst.1.2.4.16\lib\net45\SQLite.CodeFirst.dll</HintPath>
       <Private>True</Private>
@@ -188,7 +189,7 @@
     <Compile Include="Models\Repository\TagMapRepository.cs" />
     <Compile Include="Models\Repository\TagRepository.cs" />
     <Compile Include="Models\Repository\ThumbnailRepository.cs" />
-    <Compile Include="Models\SearchTagCollection.cs" />
+    <Compile Include="Models\SearchRequest.cs" />
     <Compile Include="Models\Settings\DirectoryMonitorSettings.cs" />
     <Compile Include="Models\Settings\FileExtensionSettings.cs" />
     <Compile Include="Models\Settings\UserSettingManager.cs" />
@@ -238,12 +239,12 @@
     <Compile Include="Controls\MovieItemControl.xaml.cs">
       <DependentUpon>MovieItemControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Models\Movie.cs" />
-    <Compile Include="Models\Tag.cs" />
-    <Compile Include="Models\TagCategory.cs" />
-    <Compile Include="Models\TagMap.cs" />
-    <Compile Include="Models\Thumbnail.cs" />
-    <Compile Include="Models\XMovieContext.cs" />
+    <Compile Include="Models\Data\Movie.cs" />
+    <Compile Include="Models\Data\Tag.cs" />
+    <Compile Include="Models\Data\TagCategory.cs" />
+    <Compile Include="Models\Data\TagMap.cs" />
+    <Compile Include="Models\Data\Thumbnail.cs" />
+    <Compile Include="Models\Data\XMovieContext.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>

@@ -1,4 +1,4 @@
-﻿<metro:MetroWindow x:Class="XMovie.MainWindow"
+﻿<metro:MetroWindow
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -11,14 +11,15 @@
         xmlns:behaviors="clr-namespace:XMovie.Common.Behaviors"
         xmlns:controls="clr-namespace:XMovie.Controls"
         xmlns:vm="clr-namespace:XMovie.ViewModels"
+        xmlns:Themes="clr-namespace:Microsoft.Windows.Themes;assembly=PresentationFramework.Aero2" x:Class="XMovie.MainWindow"
         mc:Ignorable="d"
         ResizeMode="CanResizeWithGrip"
-        WindowState="{Binding Path=Settings.MainWindowState, Mode=TwoWay}"
-        Height="{Binding Path=Settings.MainWindowHeight, Mode=TwoWay}"
-        Width="{Binding Path=Settings.MainWindowWidth, Mode=TwoWay}"
-        Top="{Binding Path=Settings.MainWindowTop, Mode=TwoWay}"
-        Left="{Binding Path=Settings.MainWindowLeft, Mode=TwoWay}"
-        Name="XMovieWindow"
+        WindowState="{Binding Settings.MainWindowState, Mode=TwoWay}"
+        Height="{Binding Settings.MainWindowHeight, Mode=TwoWay}"
+        Width="{Binding Settings.MainWindowWidth, Mode=TwoWay}"
+        Top="{Binding Settings.MainWindowTop, Mode=TwoWay}"
+        Left="{Binding Settings.MainWindowLeft, Mode=TwoWay}"
+        x:Name="XMovieWindow"
         Title="XMovie"
        >
 
@@ -31,12 +32,8 @@
         </i:EventTrigger>
     </i:Interaction.Triggers>
 
-    <metro:MetroWindow.Resources>
-        <common:InverseBooleanConverter x:Key="InverseBooleanConverter" />
-    </metro:MetroWindow.Resources>
-
     <metro:MetroWindow.Flyouts>
-        <metro:FlyoutsControl Name="CommonFlyout">
+        <metro:FlyoutsControl x:Name="CommonFlyout">
             <metro:Flyout Header="Tool" Position="Right" Width="350" IsOpen="{Binding ToolModel.IsOpenFlyout}" IsModal="True">
                 <Border Padding="10">
                     <Grid>
@@ -54,7 +51,7 @@
 
                             <TabItem Header="Tool">
                                 <StackPanel Orientation="Vertical">
-                                    <Button BorderThickness="1" Command="{Binding RemoveUnusedTagCommand}">未使用タグの削除</Button>
+                                    <Button BorderThickness="1" Command="{Binding RemoveUnusedTagCommand}" Content="未使用タグの削除"/>
                                 </StackPanel>
                             </TabItem>
 
@@ -83,9 +80,9 @@
                         </TabControl>
                         <StackPanel Orientation="Horizontal" Grid.Row="1" HorizontalAlignment="Right" x:Name="SettingButtons">
                             <Button Width="60" Margin="5"
-                                Command="{Binding ToolModel.CommitCommand}">OK</Button>
+                                Command="{Binding ToolModel.CommitCommand}" Content="OK"/>
                             <Button Width="60" Margin="5"
-                                Command="{Binding ToolModel.RollbackCommand}">Cancel</Button>
+                                Command="{Binding ToolModel.RollbackCommand}" Content="Cancel"/>
                         </StackPanel>
                     </Grid>
                 </Border>
@@ -110,41 +107,73 @@
                 <ColumnDefinition />
                 <ColumnDefinition />
             </Grid.ColumnDefinitions>
-            <StackPanel Orientation="Horizontal" IsEnabled="{Binding IsSearching, Converter={StaticResource InverseBooleanConverter}}">
-                <Menu VerticalAlignment="Center" ItemsSource="{Binding SearchTags}"
-                      Height="20" Width="45"
-                      Margin="10,0,5,0"
-                      >
-
-                    <Menu.ItemContainerStyle>
-                        <Style TargetType="{x:Type MenuItem}">
-                            <Setter Property="Header" Value="{Binding Path=Header}"/>
-                            <Setter Property="ItemsSource" Value="{Binding MenuItems}"/>
-                            <Setter Property="Command" Value="{Binding RelativeSource={RelativeSource AncestorType={x:Type metro:MetroWindow}},Path=DataContext.SetSearchTagCommand}" />
-                            <Setter Property="CommandParameter" Value="{Binding Header}" />
-                        </Style>
-                    </Menu.ItemContainerStyle>
-
-                </Menu>
-
-                <TextBlock Margin="10,10,0,10" VerticalAlignment="Center">Search:</TextBlock>
-                <ComboBox Margin="10" Width="200" IsEditable="True" 
+            <StackPanel Orientation="Horizontal" >
+                <TextBlock Margin="10,10,0,10" VerticalAlignment="Center"><Run Text="Search:"/></TextBlock>
+                <ComboBox Margin="10,10,0,10" Width="250" IsEditable="True" 
                           metro:TextBoxHelper.Watermark="Search"
                           Text="{Binding SearchKeywords}"
                           ItemsSource="{Binding Settings.SearchHistories}"
-                          x:Name="SearchComboBox">
+                          metro:TextBoxHelper.ClearTextButton="True"
+                          x:Name="SearchComboBox"
+                          >
                     <ComboBox.InputBindings>
                         <KeyBinding Command="{Binding SearchCommand}"
                                     Key="Return"
-                                    CommandParameter="{Binding ElementName=SearchComboBox,Path=Text}" />
+                                    CommandParameter="{Binding Text, ElementName=SearchComboBox}" />
                     </ComboBox.InputBindings>
                     <i:Interaction.Triggers>
                         <i:EventTrigger EventName="DropDownClosed">
                             <i:InvokeCommandAction Command="{Binding SearchCommand}"
-                                                   CommandParameter="{Binding ElementName=SearchComboBox,Path=Text}" />
+                                                   CommandParameter="{Binding Text, ElementName=SearchComboBox}" />
                         </i:EventTrigger>
                     </i:Interaction.Triggers>
                 </ComboBox>
+                <Button Width="28" Height="28"
+                        Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                        Command="{Binding SearchCommand}"
+                        CommandParameter="{Binding Text, ElementName=SearchComboBox}"
+                        >
+                    <Rectangle Width="18" Height="18" Fill="White">
+                        <Rectangle.OpacityMask>
+                            <VisualBrush Stretch="Uniform" Visual="{StaticResource appbar_magnify_browse}" />
+                        </Rectangle.OpacityMask>
+                    </Rectangle>
+                </Button>
+                <Button Width="28" Height="28" Margin="5,0,10,0"
+                        BorderThickness="0"
+                        Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                        x:Name="TagButton"
+                        >
+                    <i:Interaction.Triggers>
+                        <i:EventTrigger EventName="Click">
+                            <ic:ChangePropertyAction TargetObject="{Binding ContextMenu, ElementName=TagButton}"
+                                                     PropertyName="IsOpen"
+                                                     Value="True" />
+                            <ic:ChangePropertyAction TargetObject="{Binding ContextMenu, ElementName=TagButton}"
+                                                     PropertyName="PlacementTarget"
+                                                     Value="{Binding ElementName=TagButton, Mode=OneWay}"/>
+                        </i:EventTrigger>
+                    </i:Interaction.Triggers>
+                    <Rectangle Width="12" Height="12" Fill="White">
+                        <Rectangle.OpacityMask>
+                            <VisualBrush Stretch="Uniform" Visual="{StaticResource appbar_tag_label}" />
+                        </Rectangle.OpacityMask>
+                    </Rectangle>
+                    <Button.ContextMenu>
+                        <ContextMenu ItemsSource="{Binding SearchTags}">
+                            <ContextMenu.ItemContainerStyle>
+                                <Style TargetType="{x:Type MenuItem}">
+                                    <Setter Property="Header" Value="{Binding Header}" />
+                                    <Setter Property="Padding" Value="0,5,0,0" />
+                                    <Setter Property="Height" Value="30" />
+                                    <Setter Property="ItemsSource" Value="{Binding MenuItems}"/>
+                                    <Setter Property="Command" Value="{Binding DataContext.SetSearchTagCommand, RelativeSource={RelativeSource AncestorType={x:Type metro:MetroWindow}}}" />
+                                    <Setter Property="CommandParameter" Value="{Binding Header}" />
+                                </Style>
+                            </ContextMenu.ItemContainerStyle>
+                        </ContextMenu>
+                    </Button.ContextMenu>
+                </Button>
 
                 <metro:ProgressRing IsActive="{Binding IsSearching}" Foreground="AntiqueWhite"
                                     Width="30" Height="30" Margin="0,0,10,0"/>
@@ -152,15 +181,15 @@
                 <metro:ToggleSwitch VerticalAlignment="Center" OnLabel="File search" OffLabel="Tag search"
                                     Width="130"
                                     FontStyle="Normal" FontSize="12" FontFamily="Yu Gothic UI"
-                                    IsChecked="{Binding Path=IsFileSearch, Mode=TwoWay}" />
+                                    IsChecked="{Binding IsFileSearch, Mode=TwoWay}" />
 
-                <TextBlock Margin="10,10,0,10" VerticalAlignment="Center">Sort Order:</TextBlock>
+                <TextBlock Margin="10,10,0,10" VerticalAlignment="Center"><Run Text="Sort Order:"/></TextBlock>
                 <ComboBox ItemsSource="{Binding Sorter}" SelectedIndex="{Binding Settings.SorterIndex}"
                           Width="160" Margin="10">
                     <i:Interaction.Triggers>
                         <i:EventTrigger EventName="DropDownClosed">
                             <i:InvokeCommandAction Command="{Binding SearchCommand}"
-                                                   CommandParameter="{Binding ElementName=SearchComboBox,Path=Text}" />
+                                                   CommandParameter="{Binding Text, ElementName=SearchComboBox}" />
                         </i:EventTrigger>
                     </i:Interaction.Triggers>
 
@@ -174,13 +203,13 @@
                     </ResourceDictionary>
                 </StackPanel.Resources>
                 <metro:SplitButton Height="30"
-                                   ItemsSource="{Binding Path=ThumbnailCountList}"
-                                   SelectedIndex="{Binding Path=ThumbnailCountListIndex}">
+                                   ItemsSource="{Binding ThumbnailCountList}"
+                                   SelectedIndex="{Binding ThumbnailCountListIndex}">
                     <metro:SplitButton.Icon>
                         <Rectangle Width="15" Height="15" Margin="5" Fill="{StaticResource ThumbnailCountImage}" />
                     </metro:SplitButton.Icon>
                 </metro:SplitButton>
-                <Button Width="30" Height="30" Margin="10,0,0,0" Padding="0" BorderThickness="0"
+                <Button Width="30" Height="30" Margin="10,0,10,0" Padding="0" BorderThickness="0"
                         HorizontalAlignment="Right"
                         Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
                         Command="{Binding ToolModel.ToolCommand}"
@@ -190,9 +219,9 @@
                             <VisualBrush Stretch="Uniform" Visual="{StaticResource appbar_settings}" />
                         </Rectangle.Fill>
                     </Rectangle>
-                    
+
                 </Button>
-                
+
             </StackPanel>
         </Grid>
 
@@ -214,9 +243,9 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="120*" MinHeight="50" x:Name="LogViewRow"/>
                 </Grid.RowDefinitions>
-                
+
                 <!-- Movie ListBox -->
-                <ListBox Grid.Row="0" Grid.Column="0" AllowDrop="True" ItemsSource="{Binding Path=Movies}"
+                <ListBox Grid.Row="0" Grid.Column="0" AllowDrop="True" ItemsSource="{Binding Movies}"
                          SelectionMode="Extended"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                          VirtualizingPanel.IsVirtualizing="True"
@@ -229,7 +258,7 @@
 
                     <i:Interaction.Behaviors>
                         <behaviors:FileDropBehavior DropCommand="{Binding FileDropCommand}"/>
-                        <behaviors:ListBoxSelectedMovieItemsBehavior SelectedItems="{Binding MovieInformation.SelectedMovies,Mode=OneWayToSource}" />
+                        <behaviors:ListBoxSelectedMovieItemsBehavior SelectedItems="{Binding MovieInformation.SelectedMovies, Mode=OneWayToSource}" />
                     </i:Interaction.Behaviors>
                     <ListBox.ItemTemplate>
                         <DataTemplate>
@@ -238,7 +267,7 @@
                     </ListBox.ItemTemplate>
                     <ListBox.ItemsPanel>
                         <ItemsPanelTemplate>
-                        <!--
+                            <!--
                             <VirtualizingStackPanel Orientation="Vertical"  />
                             -->
                             <WrapPanel Orientation="Horizontal" Margin="0" />
@@ -251,7 +280,7 @@
 
                 <!-- Logs -->
                 <Grid Grid.Row="2" >
-                    <ListView ItemsSource="{Binding Path=Logs.LogRecords}" >
+                    <ListView ItemsSource="{Binding Logs.LogRecords}" >
                         <i:Interaction.Triggers>
                             <i:EventTrigger EventName="Loaded">
                                 <ic:CallMethodAction TargetObject="{Binding}" MethodName="LogViewLoaded" />
@@ -262,7 +291,7 @@
                         </i:Interaction.Behaviors>
 
                         <ListView.ItemContainerStyle>
-                            <Style TargetType="ListViewItem">
+                            <Style TargetType="{x:Type ListViewItem}">
                                 <Setter Property="BorderThickness" Value="0,0,0,1" />
                                 <Setter Property="BorderBrush" Value="LightGray" />
                                 <Setter Property="Template">
@@ -280,13 +309,13 @@
                                         </ControlTemplate>
                                     </Setter.Value>
                                 </Setter>
-                                <Setter Property="ToolTip" Value="{Binding Path=Message}" />
+                                <Setter Property="ToolTip" Value="{Binding Message}" />
 
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Path=Level}" Value="{x:Static common:LogLevel.Error}">
+                                    <DataTrigger Binding="{Binding Level}" Value="{x:Static common:LogLevel.Error}">
                                         <Setter Property="Background" Value="Red" />
                                     </DataTrigger>
-                                    <DataTrigger Binding="{Binding Path=Level}" Value="{x:Static common:LogLevel.Warning}">
+                                    <DataTrigger Binding="{Binding Level}" Value="{x:Static common:LogLevel.Warning}">
                                         <Setter Property="Background" Value="#CA5100" />
                                     </DataTrigger>
                                     <Trigger Property="IsSelected" Value="true">
@@ -306,14 +335,14 @@
                                 <GridViewColumn Header="Time" Width="120">
                                     <GridViewColumn.CellTemplate>
                                         <DataTemplate>
-                                            <TextBlock Text="{Binding Path=Time, StringFormat=yyyy/MM/dd HH:mm:ss}"/>
+                                            <TextBlock Text="{Binding Time, StringFormat=yyyy/MM/dd HH:mm:ss}"/>
                                         </DataTemplate>
                                     </GridViewColumn.CellTemplate>
                                 </GridViewColumn>
                                 <GridViewColumn Header="Message" Width="1000">
                                     <GridViewColumn.CellTemplate>
                                         <DataTemplate>
-                                            <TextBlock Text="{Binding Path=MessageSummary}" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Text="{Binding MessageSummary}" TextTrimming="CharacterEllipsis" />
                                         </DataTemplate>
                                     </GridViewColumn.CellTemplate>
                                 </GridViewColumn>
