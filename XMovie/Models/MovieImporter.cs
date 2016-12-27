@@ -100,7 +100,9 @@ namespace XMovie.Models
             Movie movie = null;
             try
             {
+                logger.Debug($"MD5計算中... {path}");
                 var md5 = Util.ComputeMD5(path);
+                logger.Debug($"MD5: {md5}");
                 var info = new FileInfo(path);
                 movie = new Movie()
                 {
@@ -126,7 +128,7 @@ namespace XMovie.Models
         public void UpdateMovieThumbnails(string moviePath, string thumbnailDirectory, Movie movie)
         {
             var duration = GetMovieDuration(moviePath);
-            logger.Debug($"{moviePath} Duration: {duration}, md5sum: {movie.MD5Sum}");
+            logger.Debug($"Duration: {duration}");
 
             // 1ファイルにつき5枚のサムネイルを作成する
 
@@ -185,12 +187,6 @@ namespace XMovie.Models
             if (process.ExitCode == 0)
             {
                 logger.Information($"サムネイル作成完了: {Path.GetFileName(thumbnailPath)}");
-                /*
-                if (stderr.Length > 0)
-                {
-                    logger.Warning(stderr);
-                }
-                */
                 return new Thumbnail()
                 {
                     FileName = Path.GetFileName(thumbnailPath),

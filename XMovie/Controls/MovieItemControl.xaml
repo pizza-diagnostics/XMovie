@@ -9,11 +9,16 @@
              xmlns:metro="clr-namespace:MahApps.Metro;assembly=MahApps.Metro"
              xmlns:metroc="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
              xmlns:local="clr-namespace:XMovie.Controls"
+             xmlns:common="clr-namespace:XMovie.Common"
              xmlns:vm="clr-namespace:XMovie.ViewModels"
              xmlns:p="clr-namespace:XMovie.Common.Properties"
              xmlns:control="clr-namespace:XMovie.Controls"
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300">
+
+    <UserControl.Resources>
+        <common:TagCommandParameterConverter x:Key="TagConverter" />
+    </UserControl.Resources>
 
     <Border Margin="0" Padding="5" Width="{Binding Path=MovieItemWidth}" Height="{Binding Path=MovieItemHeight}"
             IsEnabled="{Binding IsEnabled}">
@@ -32,18 +37,57 @@
                 <ContextMenu Padding="10">
                     <ContextMenu.Resources>
                         <ResourceDictionary>
-                            <VisualBrush x:Key="ThumbnailIcon" Visual="{StaticResource appbar_image}" Stretch="Uniform"/>
-                            <VisualBrush x:Key="FileNameChangeIcon" Visual="{StaticResource appbar_interface_textbox}" Stretch="Uniform"/>
                             <VisualBrush x:Key="FileMoveIcon" Visual="{StaticResource appbar_edit_box}" Stretch="Uniform"/>
                             <VisualBrush x:Key="FileDeleteIcon" Visual="{StaticResource appbar_delete}" Stretch="Uniform"/>
-                            <VisualBrush x:Key="FolderOpenIcon" Visual="{StaticResource appbar_folder_open}" Stretch="Uniform"/>
                         </ResourceDictionary>
                     </ContextMenu.Resources>
+                    <MenuItem Header="タグ追加" ItemsSource="{Binding AllTags}">
+                        <MenuItem.Icon>
+                            <Rectangle Width="20" Height="20">
+                                <Rectangle.Fill>
+                                    <VisualBrush Stretch="Uniform" Visual="{StaticResource appbar_tag_label}" />
+                                </Rectangle.Fill>
+                            </Rectangle>
+                        </MenuItem.Icon>
+
+                        <MenuItem.ItemTemplate>
+                            <HierarchicalDataTemplate ItemsSource="{Binding MenuItems}">
+                                <StackPanel Orientation="Horizontal">
+                                    <CheckBox IsChecked="{Binding IsMovieTag}" metroc:VisibilityHelper.IsVisible="{Binding IsTag}"
+                                              BorderBrush="DarkGray">
+                                        <i:Interaction.Triggers>
+                                            <i:EventTrigger EventName="Checked">
+                                                <i:InvokeCommandAction Command="{Binding Path=PlacementTarget.Tag.AddTagCommand,RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ContextMenu}}">
+                                                    <i:InvokeCommandAction.CommandParameter>
+                                                        <MultiBinding Converter="{StaticResource TagConverter}">
+                                                            <Binding />
+                                                        </MultiBinding>
+                                                    </i:InvokeCommandAction.CommandParameter>
+                                                </i:InvokeCommandAction>
+                                            </i:EventTrigger>
+                                            <i:EventTrigger EventName="Unchecked">
+                                                <i:InvokeCommandAction Command="{Binding Path=PlacementTarget.Tag.RemoveTagCommand,RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ContextMenu}}"
+                                                                       CommandParameter="{Binding Tag}" />
+                                            </i:EventTrigger>
+                                        </i:Interaction.Triggers>
+                                    </CheckBox>
+                                    <TextBlock Text="{Binding Header}" />
+                                </StackPanel>
+                            </HierarchicalDataTemplate>
+                        </MenuItem.ItemTemplate>
+                    </MenuItem>
+
+                    <Separator />
+
                     <MenuItem Header="サムネイル再生成"
                               Command="{Binding UpdateThumbnailCommand}"
                               CommandParameter="{Binding}">
                         <MenuItem.Icon>
-                            <Rectangle Width="20" Height="20" Fill="{StaticResource ThumbnailIcon}" />
+                            <Rectangle Width="20" Height="20">
+                                <Rectangle.Fill>
+                                    <VisualBrush Stretch="Uniform" Visual="{StaticResource appbar_image}" />
+                                </Rectangle.Fill>
+                            </Rectangle>
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator />
@@ -55,7 +99,11 @@
                     <MenuItem Header="ファイル名変更"
                               Command="{Binding BeginRenameCommand}" >
                         <MenuItem.Icon>
-                            <Rectangle Width="20" Height="20" Fill="{StaticResource FileNameChangeIcon}" />
+                            <Rectangle Width="20" Height="20">
+                                <Rectangle.Fill>
+                                    <VisualBrush Stretch="Uniform" Visual="{StaticResource appbar_interface_textbox}" />
+                                </Rectangle.Fill>
+                            </Rectangle>
                         </MenuItem.Icon>
                     </MenuItem>
                     <MenuItem Header="ファイル移動"
@@ -71,7 +119,11 @@
                     <Separator />
                     <MenuItem Header="動画フォルダを開く" Command="{Binding OpenMovieDirectoryCommand}">
                         <MenuItem.Icon>
-                            <Rectangle Width="20" Height="20" Fill="{StaticResource FolderOpenIcon}" />
+                            <Rectangle Width="20" Height="20">
+                                <Rectangle.Fill>
+                                    <VisualBrush Stretch="Uniform" Visual="{StaticResource appbar_folder_open}" />
+                                </Rectangle.Fill>
+                            </Rectangle>
                         </MenuItem.Icon>
                     </MenuItem>
 

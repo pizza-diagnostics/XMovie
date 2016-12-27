@@ -209,6 +209,13 @@ namespace XMovie.ViewModels
             }
         }
 
+        public ObservableCollection<SearchTagMenuItemViewModel> AllTags
+        {
+            get
+            {
+                return SearchTagMenuItemViewModel.CreateTree(MovieId)?.MenuItems;
+            }
+        }
         public void UpdateTags()
         {
             using (var repos = new RepositoryService())
@@ -272,12 +279,24 @@ namespace XMovie.ViewModels
             {
                 return addTagCommand ?? (addTagCommand = new RelayCommand((param) =>
                 {
-                    var tagParam = (Tag)param;
-                    var isExist = Tags.Any(t => t.TagId == tagParam.TagId);
-                    if (!isExist)
+                    var tagParam = param as Tag;
+                    if (tagParam == null)
                     {
-                        // TODO: 冗長
+                        var tag = ((SearchTagMenuItemViewModel)param).Tag;
+                        using (var repos = new RepositoryService())
+                        {
+                            repos.SetTagToMovies(tag, new string[] { MovieId });
+                        }
                         UpdateTags();
+                    }
+                    else
+                    {
+                        var isExist = Tags.Any(t => t.TagId == tagParam.TagId);
+                        if (!isExist)
+                        {
+                            // TODO: 冗長
+                            UpdateTags();
+                        }
                     }
                 }));
             }

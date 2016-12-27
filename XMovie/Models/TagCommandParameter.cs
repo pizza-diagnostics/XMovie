@@ -1,14 +1,24 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using XMovie.Models.Data;
+using XMovie.ViewModels;
 
 namespace XMovie.Models
 {
     public class TagCommandParameter
     {
+        private int tagCategoryId
+        {
+            set { tagCategoryId = value; }
+            get { return Tag?.TagCategoryId ?? tagCategoryId; }
+        } 
         public int TagCategoryId { get; set; }
-        public string Name { get; set; }
+
+        private string name;
+        public string Name
+        {
+            set { name = value; }
+            get { return Tag?.Name ?? name; }
+        }
+
+        public Tag Tag { get; set; }
     }
 }

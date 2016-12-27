@@ -27,6 +27,22 @@ namespace XMovie.Common
         public DateTime Time { get; private set; }
         public string Message { get; private set; }
 
+        public string LevelString
+        {
+            get
+            {
+                var tbl = new Dictionary<LogLevel, string>()
+                {
+                    { LogLevel.Debug, "D" },
+                    { LogLevel.Information, "I" },
+                    { LogLevel.Warning, "W" },
+                    { LogLevel.Error, "E" },
+                };
+                return tbl[Level];
+            }
+        }
+
+
         public string MessageSummary
         {
             get

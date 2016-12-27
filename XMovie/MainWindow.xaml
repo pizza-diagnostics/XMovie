@@ -91,6 +91,9 @@
     </metro:MetroWindow.Flyouts>
 
     <Grid>
+        <Grid.Resources>
+            <GridLengthConverter x:Key="GridLengthConverter" />
+        </Grid.Resources>
 
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -167,7 +170,7 @@
                                     <Setter Property="Padding" Value="0,5,0,0" />
                                     <Setter Property="Height" Value="30" />
                                     <Setter Property="ItemsSource" Value="{Binding MenuItems}"/>
-                                    <Setter Property="Command" Value="{Binding DataContext.SetSearchTagCommand, RelativeSource={RelativeSource AncestorType={x:Type metro:MetroWindow}}}" />
+                                    <Setter Property="Command" Value="{Binding DataContext.TagSearchCommand, RelativeSource={RelativeSource AncestorType={x:Type metro:MetroWindow}}}" />
                                     <Setter Property="CommandParameter" Value="{Binding Header}" />
                                 </Style>
                             </ContextMenu.ItemContainerStyle>
@@ -233,7 +236,7 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="300*" />
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="120*" MinWidth="50" x:Name="InfoViewColumn"/>
+                <ColumnDefinition Width="{Binding Settings.InfoColumnWidth, Mode=TwoWay}" MinWidth="50"/>
             </Grid.ColumnDefinitions>
 
             <!-- -->
@@ -241,7 +244,7 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="300*" />
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="120*" MinHeight="50" x:Name="LogViewRow"/>
+                    <RowDefinition Height="{Binding Settings.LogRowHeight, Mode=TwoWay}" MinHeight="50" />
                 </Grid.RowDefinitions>
 
                 <!-- Movie ListBox -->
@@ -280,75 +283,118 @@
 
                 <!-- Logs -->
                 <Grid Grid.Row="2" >
-                    <ListView ItemsSource="{Binding Logs.LogRecords}" >
-                        <i:Interaction.Triggers>
-                            <i:EventTrigger EventName="Loaded">
-                                <ic:CallMethodAction TargetObject="{Binding}" MethodName="LogViewLoaded" />
-                            </i:EventTrigger>
-                        </i:Interaction.Triggers>
-                        <i:Interaction.Behaviors>
-                            <behaviors:ScrollIntoViewBehavior />
-                        </i:Interaction.Behaviors>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition />
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <ListView ItemsSource="{Binding Logs.LogRecords}" >
+                            <i:Interaction.Triggers>
+                                <i:EventTrigger EventName="Loaded">
+                                    <ic:CallMethodAction TargetObject="{Binding}" MethodName="LogViewLoaded" />
+                                </i:EventTrigger>
+                            </i:Interaction.Triggers>
+                            <i:Interaction.Behaviors>
+                                <behaviors:ScrollIntoViewBehavior />
+                            </i:Interaction.Behaviors>
 
-                        <ListView.ItemContainerStyle>
-                            <Style TargetType="{x:Type ListViewItem}">
-                                <Setter Property="BorderThickness" Value="0,0,0,1" />
-                                <Setter Property="BorderBrush" Value="LightGray" />
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="{x:Type ListViewItem}">
-                                            <Border BorderBrush="Transparent"
-                                                    BorderThickness="0"
-                                                    Background="{TemplateBinding Background}">
-                                                <GridViewRowPresenter HorizontalAlignment="Stretch"
-                                                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                                                      Width="Auto" 
-                                                                      Margin="0"
-                                                                      Content="{TemplateBinding Content}" />
-                                            </Border>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                                <Setter Property="ToolTip" Value="{Binding Message}" />
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="{x:Type ListViewItem}">
+                                    <Setter Property="BorderThickness" Value="0,0,0,1" />
+                                    <Setter Property="BorderBrush" Value="LightGray" />
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="{x:Type ListViewItem}">
+                                                <Border BorderBrush="Transparent"
+                                                        BorderThickness="0"
+                                                        Background="{TemplateBinding Background}">
+                                                    <GridViewRowPresenter HorizontalAlignment="Stretch"
+                                                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                                          Width="Auto" 
+                                                                          Margin="0"
+                                                                          Content="{TemplateBinding Content}" />
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Setter Property="ToolTip" Value="{Binding Message}" />
 
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Level}" Value="{x:Static common:LogLevel.Error}">
-                                        <Setter Property="Background" Value="Red" />
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding Level}" Value="{x:Static common:LogLevel.Warning}">
-                                        <Setter Property="Background" Value="#CA5100" />
-                                    </DataTrigger>
-                                    <Trigger Property="IsSelected" Value="true">
-                                        <Setter Property="Foreground" Value="#DFDFDF" />
-                                        <Setter Property="Background" Value="#576573" />
-                                    </Trigger>
-                                    <Trigger Property="IsMouseOver" Value="true">
-                                        <Setter Property="Background" Value="Gray" />
-                                        <Setter Property="Foreground" Value="White" />
-                                    </Trigger>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Level}" Value="{x:Static common:LogLevel.Error}">
+                                            <Setter Property="Background" Value="Red" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Level}" Value="{x:Static common:LogLevel.Warning}">
+                                            <Setter Property="Background" Value="#CA5100" />
+                                        </DataTrigger>
+                                        <Trigger Property="IsSelected" Value="true">
+                                            <Setter Property="Foreground" Value="#DFDFDF" />
+                                            <Setter Property="Background" Value="#576573" />
+                                        </Trigger>
+                                        <Trigger Property="IsMouseOver" Value="true">
+                                            <Setter Property="Background" Value="Gray" />
+                                            <Setter Property="Foreground" Value="White" />
+                                        </Trigger>
 
-                                </Style.Triggers>
-                            </Style>
-                        </ListView.ItemContainerStyle>
-                        <ListView.View>
-                            <GridView>
-                                <GridViewColumn Header="Time" Width="120">
-                                    <GridViewColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <TextBlock Text="{Binding Time, StringFormat=yyyy/MM/dd HH:mm:ss}"/>
-                                        </DataTemplate>
-                                    </GridViewColumn.CellTemplate>
-                                </GridViewColumn>
-                                <GridViewColumn Header="Message" Width="1000">
-                                    <GridViewColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <TextBlock Text="{Binding MessageSummary}" TextTrimming="CharacterEllipsis" />
-                                        </DataTemplate>
-                                    </GridViewColumn.CellTemplate>
-                                </GridViewColumn>
-                            </GridView>
-                        </ListView.View>
-                    </ListView>
+                                    </Style.Triggers>
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Header="Lv" Width="30">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding LevelString}" />
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Header="Time" Width="120">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Time, StringFormat=yyyy/MM/dd HH:mm:ss}"/>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Header="Message" Width="1000">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding MessageSummary}" TextTrimming="CharacterEllipsis" />
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                            <CheckBox Grid.Column="0" VerticalAlignment="Center" VerticalContentAlignment="Center"
+                                      FontSize="10" Width="60" Content="DEBUG"
+                                      IsChecked="{Binding Logs.IsEnableDebugLog}"
+                                      />
+                            <CheckBox Grid.Column="1" VerticalAlignment="Center" VerticalContentAlignment="Center"
+                                      FontSize="10" Width="60" Content="INFO"
+                                      IsChecked="{Binding Logs.IsEnableInfoLog}"
+                                      />
+                            <CheckBox Grid.Column="2" VerticalAlignment="Center" VerticalContentAlignment="Center"
+                                      FontSize="10" Width="60" Content="WARN"
+                                      IsChecked="{Binding Logs.IsEnableWarningLog}"
+                                      />
+                            <CheckBox Grid.Column="3" VerticalAlignment="Center" VerticalContentAlignment="Center"
+                                      FontSize="10" Width="60" Content="ERROR"
+                                      IsChecked="{Binding Logs.IsEnableErrorLog}"
+                                      />
+                            <Border Width="1" BorderThickness="1" BorderBrush="Gray" Margin="5"/>
+                            <Button Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                                    HorizontalAlignment="Left"
+                                    Margin="0,0,10,0"
+                                    Command="{Binding Logs.ClearLogCommand}"
+                                    >
+                                <Rectangle Width="18" Height="18" Fill="White">
+                                    <Rectangle.OpacityMask>
+                                        <VisualBrush Stretch="Uniform" Visual="{StaticResource appbar_list_delete_inline}" />
+                                    </Rectangle.OpacityMask>
+                                </Rectangle>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
                 </Grid>
 
             </Grid>

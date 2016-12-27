@@ -35,7 +35,8 @@ namespace XMovie.Models.Repository
         public Movie FindMovieAtPath(string path)
         {
             var movies = GetAll();
-            return  movies.Where(m => Util.IsEqualsNormalizedPath(path, m.Path)).FirstOrDefault();
+            // IQueryable中でIsEqualsNormalizedPathが使用できないためListにしてから検索する
+            return  movies.ToList().Where(m => Util.IsEqualsNormalizedPath(path, m.Path)).FirstOrDefault();
         }
 
         public IQueryable<Movie> FindMovies(Expression<Func<Movie, bool>> predicate, SortDescriptor sort)

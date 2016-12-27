@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Data;
 using XMovie.Models;
+using XMovie.Models.Data;
+using XMovie.ViewModels;
 
 namespace XMovie.Common
 {
@@ -14,9 +16,13 @@ namespace XMovie.Common
     {
         public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
         {
-            if (values[0] == DependencyProperty.UnsetValue || values[1] == DependencyProperty.UnsetValue)
+            // Tag
+            if (values[0] != null && values[0] != DependencyProperty.UnsetValue && values[0].GetType() == typeof(SearchTagMenuItemViewModel))
             {
-                return null;
+                return new TagCommandParameter()
+                {
+                    Tag = ((SearchTagMenuItemViewModel)values[0]).Tag
+                };
             }
 
             return new TagCommandParameter()

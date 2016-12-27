@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -32,6 +33,22 @@ namespace XMovie.Models.Settings
         public int MainWindowLeft { get; set; } = 100;
         public WindowState MainWindowState { get; set; } = WindowState.Normal;
 
+        [IgnoreDataMember]
+        public GridLength InfoColumnWidth
+        {
+            get { return new GridLength(MainWindowInfoColumnWidth, GridUnitType.Pixel); }
+            set { MainWindowInfoColumnWidth = (int)value.Value; }
+        }
+        public int MainWindowInfoColumnWidth { get; set; } = 100;
+
+        [IgnoreDataMember]
+        public GridLength LogRowHeight
+        {
+            get { return new GridLength(MainWindowLogRowHeigh); }
+            set { MainWindowLogRowHeigh = (int)value.Value; }
+        }
+        public int MainWindowLogRowHeigh { get; set; } = 100;
+
         public int SorterIndex { get; set; } = 0;
 
         public bool IsFileSearch { get; set; } = false;
@@ -46,6 +63,11 @@ namespace XMovie.Models.Settings
 
         public ObservableCollection<FileExtensionSettings> DefaultMovieExtensions { get; set; }
             = FileExtensionSettings.GetDefaultMovieExtensions();
+
+        public bool IsEnableDebugLog { get; set; } = true;
+        public bool IsEnableInfoLog { get; set; } = true;
+        public bool IsEnableWarningLog { get; set; } = true;
+        public bool IsEnableErrorLog { get; set; } = true;
 
         public UserSettings()
         {

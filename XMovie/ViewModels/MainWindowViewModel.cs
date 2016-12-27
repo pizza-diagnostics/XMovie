@@ -57,10 +57,6 @@ namespace XMovie.ViewModels
 
             BindingOperations.EnableCollectionSynchronization(Movies, new object());
 
-            var smodel = new SearchTagMenuItemViewModel();
-            smodel.CreateTree();
-            SearchTags = smodel.MenuItems;
-
             SearchMovies("");
 
             var monitor = DirectoryMonitor.Instance;
@@ -87,11 +83,12 @@ namespace XMovie.ViewModels
 
         #region Properties
 
-        private ObservableCollection<SearchTagMenuItemViewModel> searchTags;
         public ObservableCollection<SearchTagMenuItemViewModel> SearchTags
         {
-            get { return searchTags; }
-            set { SetProperty(ref searchTags, value, "SearchTags"); }
+            get
+            {
+                return SearchTagMenuItemViewModel.CreateTree()?.MenuItems;
+            }
         }
 
         public int ThumbnailCount
@@ -303,7 +300,17 @@ namespace XMovie.ViewModels
                 return tagSearchCommand ?? (tagSearchCommand = new RelayCommand((param) =>
                 {
                     IsFileSearch = false;
-                    SearchMovies(((Tag)param).Name);
+                    var keyword = (param as string) ?? (param as Tag)?.Name;
+
+                    if (String.IsNullOrWhiteSpace(SearchKeywords))
+                    {
+                        SearchKeywords = keyword;
+                    }
+                    else
+                    {
+                        SearchKeywords = $"{SearchKeywords} {keyword}";
+                    }
+                    SearchMovies(SearchKeywords);
                 }));
             }
         }
@@ -315,20 +322,23 @@ namespace XMovie.ViewModels
             {
                 return addTagCommand ?? (addTagCommand = new RelayCommand((param) =>
                 {
-                    var tagParameter = (TagCommandParameter)param;
-                    if (String.IsNullOrWhiteSpace(tagParameter.Name))
-                        return;
-
+                    var tagParam = (TagCommandParameter)param;
+                    Tag tag = tagParam.Tag;
                     using (var repos = new RepositoryService())
                     {
-                        var tag = repos.InsertNewTag(tagParameter.Name, tagParameter.TagCategoryId);
+                        if (tag == null)
+                        {
+                            // Tagがnullの場合は新規の可能性
+                            if (String.IsNullOrWhiteSpace(tagParam.Name))
+                                return;
+                            tag = repos.InsertNewTag(tagParam.Name, tagParam.TagCategoryId);
+                        }
                         MovieInformation.AddTagCommand.Execute(tag);
                         foreach (MovieItemViewModel movie in MovieInformation.SelectedMovies)
                         {
                             movie.AddTagCommand.Execute(tag);
                         }
                     }
- 
                 }));
             }
         }
@@ -340,10 +350,11 @@ namespace XMovie.ViewModels
             {
                 return removeTagCommand ?? (removeTagCommand = new RelayCommand((param) =>
                 {
-                    MovieInformation.RemoveTagCommand.Execute(param);
+                    var tag = (Tag)param;
+                    MovieInformation.RemoveTagCommand.Execute(tag);
                     foreach (MovieItemViewModel movie in MovieInformation.SelectedMovies)
                     {
-                        movie.RemoveTagCommand.Execute(param);
+                        movie.RemoveTagCommand.Execute(tag);
                     }
                 }));
             }
@@ -501,18 +512,6 @@ namespace XMovie.ViewModels
             }
         }
 
-        private ICommand setSearchTagCommand;
-        public ICommand SetSearchTagCommand
-        {
-            get
-            {
-                return setSearchTagCommand ?? (setSearchTagCommand = new RelayCommand((param) =>
-                {
-                    SearchKeywords = $"{SearchKeywords} {(string)param}";
-                    SearchMovies(SearchKeywords);
-                }));
-            }
-        }
         #endregion
 
         private void StartMonitor()
@@ -552,7 +551,7 @@ namespace XMovie.ViewModels
 
         private async void SearchMovies(string keywords)
         {
-            var cond = $"{keywords}:{Settings.SorterIndex}";
+            var cond = $"{keywords}:{Settings.SorterIndex}:{IsFileSearch}";
             if (lastSearchCondition.Equals(cond))
                 return;
             lastSearchCondition = cond;

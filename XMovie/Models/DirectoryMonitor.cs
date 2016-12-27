@@ -149,7 +149,8 @@ namespace XMovie.Models
                 {
                     while (true)
                     {
-                        await Task.Delay(1000);
+                        logger.Debug("ファイルアクセス許可待機中...");
+                        await Task.Delay(500);
                         if (!IsFileLocked(e.FullPath))
                         {
                             if (File.Exists(e.FullPath))
