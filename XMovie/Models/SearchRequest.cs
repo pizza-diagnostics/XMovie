@@ -20,20 +20,17 @@ namespace XMovie.Models
 
         public Task Entry(string entry)
         {
-            System.Diagnostics.Debug.Print($"entry: {entry}");
             lock (requestQueue)
             {
                 requestQueue.Enqueue(entry);
             }
             // unsafe?
 
-            System.Diagnostics.Debug.Print($"wait : {entry}");
             return semaphore.WaitAsync();
         }
 
         public void Release(string entry)
         {
-            System.Diagnostics.Debug.Print($"release : {entry}");
             lock (requestQueue)
             {
                 var e = requestQueue.Dequeue();
