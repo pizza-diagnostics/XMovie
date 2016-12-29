@@ -216,7 +216,6 @@
     <Compile Include="ViewModels\SearchTagMenuItemViewModel.cs" />
     <Compile Include="ViewModels\TagViewModel.cs" />
     <Compile Include="ViewModels\ToolViewModel.cs" />
-    <Compile Include="ViewModels\ViewModelBase.cs" />
     <Page Include="Controls\DirectoryMonitorSettingControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

@@ -1,4 +1,5 @@
-﻿using Prism.Mvvm;
+﻿using Prism.Commands;
+using Prism.Mvvm;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -72,7 +73,7 @@ namespace XMovie.ViewModels
         {
             get { return settings.IsEnableErrorLog; }
             set { settings.IsEnableErrorLog = value; }
-        } 
+        }
 
         // NOTE: 現状filterではなく追加自体を行わないようにしている
         /*
@@ -99,19 +100,7 @@ namespace XMovie.ViewModels
         {
             get
             {
-                return clearLogCommand ?? (clearLogCommand = new RelayCommand((param) => { LogRecords.Clear(); }));
-            }
-        }
-
-        private ICommand setLogLevelCommand;
-        public ICommand SetLogLevelCommand
-        {
-            get
-            {
-                return setLogLevelCommand ?? (setLogLevelCommand = new RelayCommand((param) =>
-                {
-
-                }));
+                return clearLogCommand ?? (clearLogCommand = new DelegateCommand(() => { LogRecords.Clear(); }));
             }
         }
              

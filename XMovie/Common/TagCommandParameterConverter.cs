@@ -16,6 +16,9 @@ namespace XMovie.Common
     {
         public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
         {
+            // TODO: Converterを整理する
+
+
             // Tag
             if (values[0] != null && values[0] != DependencyProperty.UnsetValue && values[0].GetType() == typeof(SearchTagMenuItemViewModel))
             {
@@ -23,6 +26,13 @@ namespace XMovie.Common
                 {
                     Tag = ((SearchTagMenuItemViewModel)values[0]).Tag
                 };
+            }
+
+            if (values.Length == 2 && 
+                (values[0] == null || values[0] == DependencyProperty.UnsetValue) ||
+                (values[1] == null || values[1] == DependencyProperty.UnsetValue))
+            {
+                return null;
             }
 
             return new TagCommandParameter()

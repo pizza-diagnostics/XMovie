@@ -52,7 +52,11 @@ namespace XMovie.Common.Behaviors
 
         private void AssociatedObject_Drop(object sender, DragEventArgs e)
         {
-            DropCommand.Execute(e.Data.GetData(DataFormats.FileDrop));
+            var args = e.Data.GetData(DataFormats.FileDrop) as string[];
+            if (args != null)
+            {
+                DropCommand.Execute(args);
+            }
         }
 
         private void AssociatedObject_DragOver(object sender, DragEventArgs e)

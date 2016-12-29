@@ -1,4 +1,5 @@
-﻿using Prism.Mvvm;
+﻿using Prism.Commands;
+using Prism.Mvvm;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -245,7 +246,7 @@ namespace XMovie.ViewModels
         {
             get
             {
-                return windowClosingCommand ?? (windowClosingCommand = new RelayCommand((param) => { UserSettingManager.Instance.Save(); }));
+                return windowClosingCommand ?? (windowClosingCommand = new DelegateCommand(() => { UserSettingManager.Instance.Save(); }));
             }
         }
 
@@ -254,30 +255,26 @@ namespace XMovie.ViewModels
         {
             get
             {
-                return fileDropCommand ?? (fileDropCommand = new RelayCommand(async (param) =>
+                return fileDropCommand ?? (fileDropCommand = new DelegateCommand<string[]>(async (files) =>
                 {
                     await Task.Run(async () =>
                     {
-                        var files = param as string[];
-                        if (files != null)
+                        var exts = UserSettingManager.Instance.GetUserSettings().GetImportableMovieExtensions(); ;
+                        var importer = new MovieImporter();
+                        foreach (var file in files)
                         {
-                            var exts = UserSettingManager.Instance.GetUserSettings().GetImportableMovieExtensions(); ;
-                            var importer = new MovieImporter();
-                            foreach (var file in files)
+                            if (Directory.Exists(file))
                             {
-                                if (Directory.Exists(file))
-                                {
-                                    // 監視ディレクトリとして追加
-                                    AddDirectoryMonitor(file);
-                                    continue;
-                                }
-                                if (!exts.Contains(Path.GetExtension(file).ToLower()))
-                                {
-                                    logger.Warning($"対応していない拡張子です。{file}");
-                                    continue;
-                                }
-                                await movieDispatcher.ImportMovie(file, Movies);
+                                // 監視ディレクトリとして追加
+                                AddDirectoryMonitor(file);
+                                continue;
                             }
+                            if (!exts.Contains(Path.GetExtension(file).ToLower()))
+                            {
+                                logger.Warning($"対応していない拡張子です。{file}");
+                                continue;
+                            }
+                            await movieDispatcher.ImportMovie(file, Movies);
                         }
                     });
                 }));
@@ -289,7 +286,7 @@ namespace XMovie.ViewModels
         {
             get
             {
-                return searchCommand ?? (searchCommand = new RelayCommand((param) => { SearchMovies((string)param); }));
+                return searchCommand ?? (searchCommand = new DelegateCommand<string>((param) => { SearchMovies(param); }));
             }
         }
 
@@ -298,7 +295,7 @@ namespace XMovie.ViewModels
         {
             get
             {
-                return tagSearchCommand ?? (tagSearchCommand = new RelayCommand((param) =>
+                return tagSearchCommand ?? (tagSearchCommand = new DelegateCommand<object>((param) =>
                 {
                     IsFileSearch = false;
                     var keyword = (param as string) ?? (param as Tag)?.Name;
@@ -321,9 +318,8 @@ namespace XMovie.ViewModels
         {
             get
             {
-                return addTagCommand ?? (addTagCommand = new RelayCommand((param) =>
+                return addTagCommand ?? (addTagCommand = new DelegateCommand<TagCommandParameter>((tagParam) =>
                 {
-                    var tagParam = (TagCommandParameter)param;
                     Tag tag = tagParam.Tag;
                     using (var repos = new RepositoryService())
                     {
@@ -349,9 +345,8 @@ namespace XMovie.ViewModels
         {
             get
             {
-                return removeTagCommand ?? (removeTagCommand = new RelayCommand((param) =>
+                return removeTagCommand ?? (removeTagCommand = new DelegateCommand<Tag>((tag) =>
                 {
-                    var tag = (Tag)param;
                     MovieInformation.RemoveTagCommand.Execute(tag);
                     foreach (MovieItemViewModel movie in MovieInformation.SelectedMovies)
                     {
@@ -366,13 +361,13 @@ namespace XMovie.ViewModels
         {
             get
             {
-                return removeTagCommand ?? (removeCategoryCommand = new RelayCommand(async (param) =>
+                return removeTagCommand ?? (removeCategoryCommand = new DelegateCommand<TagViewModel>(async (tagViewModel) =>
                 {
                     var result = await dialogService.ShowConfirmDialog("カテゴリの削除",
                         "カテゴリを削除しますか?\n(全ての動画からカテゴリに属するすべてのタグが削除されます。)");
                     if (result)
                     {
-                        MovieInformation.RemoveCategoryCommand.Execute(param);
+                        MovieInformation.RemoveCategoryCommand.Execute(tagViewModel);
                         if (MovieInformation.SelectedMovies != null)
                         {
                             foreach (MovieItemViewModel movie in MovieInformation.SelectedMovies)
@@ -391,9 +386,8 @@ namespace XMovie.ViewModels
         {
             get
             {
-                return unregisterMovieCommand ?? (unregisterMovieCommand = new RelayCommand(async (param) =>
+                return unregisterMovieCommand ?? (unregisterMovieCommand = new DelegateCommand<MovieItemViewModel>(async (movie) =>
                 {
-                    MovieItemViewModel movie = (MovieItemViewModel)param;
                     movie.IsEnabled = false;
                     await movieDispatcher.UnregisterMovie(movie.MovieId, Movies);
                     foreach (MovieItemViewModel m in MovieInformation.SelectedMovies)
@@ -411,9 +405,8 @@ namespace XMovie.ViewModels
         {
             get
             {
-                return moveMovieCommand ?? (moveMovieCommand = new RelayCommand((param) =>
+                return moveMovieCommand ?? (moveMovieCommand = new DelegateCommand<MovieItemViewModel>((model) =>
                 {
-                    var model = (MovieItemViewModel)param;
                     var dest = dialogService.ShowFolderDialog("移動先フォルダの選択", Path.GetDirectoryName(model.Path));
                     if (dest == null)
                     {
@@ -451,9 +444,8 @@ namespace XMovie.ViewModels
         {
             get
             {
-                return removeMovieCommand ?? (removeMovieCommand = new RelayCommand(async (param) =>
+                return removeMovieCommand ?? (removeMovieCommand = new DelegateCommand<MovieItemViewModel>(async (model) =>
                 {
-                    var model = (MovieItemViewModel)param;
                     var msg = $"{model.Path}を削除しますか?\n(ファイルは完全に削除されます。)";
                     if (await dialogService.ShowConfirmDialog("ファイルの削除", msg))
                     {
@@ -485,7 +477,7 @@ namespace XMovie.ViewModels
         {
             get
             {
-                return removeUnusedTagCommand ?? (removeUnusedTagCommand = new RelayCommand(async (param) =>
+                return removeUnusedTagCommand ?? (removeUnusedTagCommand = new DelegateCommand(async () =>
                 {
                     using (var repos = new RepositoryService())
                     {

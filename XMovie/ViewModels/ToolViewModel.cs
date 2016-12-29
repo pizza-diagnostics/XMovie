@@ -1,12 +1,9 @@
-﻿using Prism.Mvvm;
+﻿using Prism.Commands;
+using Prism.Mvvm;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Input;
-using XMovie.Common;
 using XMovie.Models.Settings;
 using XMovie.Service;
 
@@ -102,7 +99,7 @@ namespace XMovie.ViewModels
         {
             get
             {
-                return toolCommand ?? (toolCommand = new RelayCommand((param) => { IsOpenFlyout = true; }));
+                return toolCommand ?? (toolCommand = new DelegateCommand(() => { IsOpenFlyout = true; }));
             }
         }
 
@@ -111,9 +108,9 @@ namespace XMovie.ViewModels
         {
             get
             {
-                return removeDirectoryMonitorCommand ?? (removeDirectoryMonitorCommand = new RelayCommand((param) =>
+                return removeDirectoryMonitorCommand ?? (removeDirectoryMonitorCommand = new DelegateCommand<DirectoryMonitorSettings>((param) =>
                 {
-                    DirectoryMonitors.Remove((DirectoryMonitorSettings)param);
+                    DirectoryMonitors.Remove(param);
                 }));
             }
         }
@@ -123,7 +120,7 @@ namespace XMovie.ViewModels
         {
             get
             {
-                return addMovieExtensionCommand ?? (addMovieExtensionCommand = new RelayCommand((param) =>
+                return addMovieExtensionCommand ?? (addMovieExtensionCommand = new DelegateCommand(() =>
                 {
                     var ext = NewMovieExtension?.ToLower();
                     if (!String.IsNullOrWhiteSpace(ext) &&
@@ -146,21 +143,21 @@ namespace XMovie.ViewModels
         {
             get
             {
-                return removeMovieExtensionCommand ?? (removeMovieExtensionCommand = new RelayCommand((param) =>
+                return removeMovieExtensionCommand ?? (removeMovieExtensionCommand = new DelegateCommand<FileExtensionSettings>((param) =>
                 {
-                    CustomMovieExtensions.Remove((FileExtensionSettings)param);
+                    CustomMovieExtensions.Remove(param);
                 }));
             }
         }
 
         public ICommand CommitCommand
         {
-            get { return new RelayCommand((param) => { Commit(); IsOpenFlyout = false; }); }
+            get { return new DelegateCommand(() => { Commit(); IsOpenFlyout = false; }); }
         }
 
         public ICommand RollbackCommand
         {
-            get { return new RelayCommand((param) => { Rollback(); IsOpenFlyout = false; }); }
+            get { return new DelegateCommand(() => { Rollback(); IsOpenFlyout = false; }); }
         }
     }
 }

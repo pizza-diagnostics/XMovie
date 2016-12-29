@@ -1,4 +1,5 @@
-﻿using Prism.Mvvm;
+﻿using Prism.Commands;
+using Prism.Mvvm;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -74,9 +75,8 @@ namespace XMovie.ViewModels
         {
             get
             {
-                return addNewCategoryCommand ?? (addNewCategoryCommand = new RelayCommand((param) =>
+                return addNewCategoryCommand ?? (addNewCategoryCommand = new DelegateCommand<string>((categoryName) =>
                 {
-                    string categoryName = (string)param;
                     using (var repos = new RepositoryService())
                     {
                         if (!repos.IsExistCategory(categoryName))
@@ -111,14 +111,13 @@ namespace XMovie.ViewModels
         {
             get
             {
-                return addTagCommand ?? (addTagCommand = new RelayCommand((param) =>
+                return addTagCommand ?? (addTagCommand = new DelegateCommand<Tag>((tagParam) =>
                 {
-                    var tagParam = (Tag)param;
                     foreach (TagViewModel tag in Tags)
                     {
                         if (tag.TagCategoryId == tagParam.TagCategoryId)
                         {
-                            tag.AddTagCommand.Execute(param);
+                            tag.AddTagCommand.Execute(tagParam);
                         }
                     }
                 }));
@@ -130,11 +129,11 @@ namespace XMovie.ViewModels
         {
             get
             {
-                return removeTagCommand ?? (removeTagCommand = new RelayCommand((param) =>
+                return removeTagCommand ?? (removeTagCommand = new DelegateCommand<Tag>((tagParam) =>
                 {
                     foreach (TagViewModel tag in Tags)
                     {
-                        tag.RemoveTagCommand.Execute(param);
+                        tag.RemoveTagCommand.Execute(tagParam);
                     }
                 }));
             }
@@ -145,9 +144,8 @@ namespace XMovie.ViewModels
         {
             get
             {
-                return removeCategoryCommand ?? (removeCategoryCommand = new RelayCommand((param) =>
+                return removeCategoryCommand ?? (removeCategoryCommand = new DelegateCommand<TagViewModel>((tagViewModel) =>
                 {
-                    var tagViewModel = (TagViewModel)param;
                     var categoryId = tagViewModel.TagCategoryId;
 
                     using (var repos = new RepositoryService())

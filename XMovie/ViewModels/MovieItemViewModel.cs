@@ -1,4 +1,5 @@
-﻿using Prism.Mvvm;
+﻿using Prism.Commands;
+using Prism.Mvvm;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -227,12 +228,11 @@ namespace XMovie.ViewModels
         {
             get
             {
-                return changeRankCommand ?? (changeRankCommand = new RelayCommand((param) =>
+                return changeRankCommand ?? (changeRankCommand = new DelegateCommand<int?>((rankDelta) =>
                 {
                     using (var repos = new RepositoryService())
                     {
-                        int r = (int)param;
-                        var movie = repos.ApplyMovie(MovieId, (m => m.Rank += r));
+                        var movie = repos.ApplyMovie(MovieId, (m => m.Rank += rankDelta.Value));
                         if (movie != null)
                         {
                             Rank = movie.Rank;
@@ -247,7 +247,7 @@ namespace XMovie.ViewModels
         {
             get
             {
-                return playMovieCommand ?? (playMovieCommand = new RelayCommand(param =>
+                return playMovieCommand ?? (playMovieCommand = new DelegateCommand(() =>
                 {
                     try
                     {
@@ -274,7 +274,7 @@ namespace XMovie.ViewModels
         {
             get
             {
-                return addTagCommand ?? (addTagCommand = new RelayCommand((param) =>
+                return addTagCommand ?? (addTagCommand = new DelegateCommand<object>((param) =>
                 {
                     var tagParam = param as Tag;
                     if (tagParam == null)
@@ -304,9 +304,9 @@ namespace XMovie.ViewModels
         {
             get
             {
-                return removeTagCommand ?? (removeTagCommand = new RelayCommand((param) =>
+                return removeTagCommand ?? (removeTagCommand = new DelegateCommand<Tag>((tag) =>
                 {
-                    var remove = Tags.Where(t => t.TagId == ((Tag)param).TagId).FirstOrDefault();
+                    var remove = Tags.Where(t => t.TagId == (tag).TagId).FirstOrDefault();
                     Tags.Remove(remove);
                 }));
             }
@@ -317,7 +317,7 @@ namespace XMovie.ViewModels
         {
             get
             {
-                return beginRenameCommand ?? (beginRenameCommand = new RelayCommand((param) => { IsRenameMode = true; }));
+                return beginRenameCommand ?? (beginRenameCommand = new DelegateCommand(() => { IsRenameMode = true; }));
             }
         }
 
@@ -326,9 +326,8 @@ namespace XMovie.ViewModels
         {
             get
             {
-                return renameCommand ?? (renameCommand = new RelayCommand((param) =>
+                return renameCommand ?? (renameCommand = new DelegateCommand<string>((newFileName) =>
                 {
-                    string newFileName = (string)param;
                     var invalidChars = System.IO.Path.GetInvalidFileNameChars();
                     if (newFileName.Any(c => invalidChars.Contains(c)))
                     {
@@ -374,7 +373,7 @@ namespace XMovie.ViewModels
         {
             get
             {
-                return renameCancelCommand ?? (renameCancelCommand = new RelayCommand((param) => { IsRenameMode = false; }));
+                return renameCancelCommand ?? (renameCancelCommand = new DelegateCommand(() => { IsRenameMode = false; }));
             }
         }
 
@@ -383,7 +382,7 @@ namespace XMovie.ViewModels
         {
             get
             {
-                return openMovieDirectoryCommand ?? (openMovieDirectoryCommand = new RelayCommand((param) =>
+                return openMovieDirectoryCommand ?? (openMovieDirectoryCommand = new DelegateCommand(() =>
                 {
                     try
                     {
@@ -402,9 +401,8 @@ namespace XMovie.ViewModels
         {
             get
             {
-                return updateThumbnailCommand ?? (updateThumbnailCommand = new RelayCommand((param) =>
+                return updateThumbnailCommand ?? (updateThumbnailCommand = new DelegateCommand<MovieItemViewModel>((model) =>
                 {
-                    var model = (MovieItemViewModel)param;
                     model.IsEnabled = false;
 
                     using (var repos = new RepositoryService())

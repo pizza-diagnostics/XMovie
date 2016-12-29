@@ -1,8 +1,8 @@
-﻿using Prism.Mvvm;
+﻿using Prism.Commands;
+using Prism.Mvvm;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows.Input;
-using XMovie.Common;
 using XMovie.Models.Data;
 using XMovie.Models.Repository;
 using XMovie.Service;
@@ -101,9 +101,8 @@ namespace XMovie.ViewModels
         {
             get
             {
-                return addTagCommand ?? (addTagCommand = new RelayCommand((param) =>
+                return addTagCommand ?? (addTagCommand = new DelegateCommand<Tag>((tag) =>
                 {
-                    var tag = (Tag)param;
                     var targetMovieIdList = SelectedMovies.Select(m => m.MovieId);
 
                     using (var repos = new RepositoryService())
@@ -123,9 +122,9 @@ namespace XMovie.ViewModels
         {
             get
             {
-                return removeTagCommand ?? (removeTagCommand = new RelayCommand((param) =>
+                return removeTagCommand ?? (removeTagCommand = new DelegateCommand<Tag>((tag) =>
                 {
-                    var tagId = ((Tag)param).TagId;
+                    var tagId = (tag).TagId;
                     var movieIdList = selectedMovies.Select(m => m.MovieId).ToList();
 
                     using (var repo = new RepositoryService())
@@ -139,17 +138,6 @@ namespace XMovie.ViewModels
             }
         }
 
-        private ICommand removeCategoryCommand;
-        public ICommand RemoveCategoryCommand
-        {
-            get
-            {
-                return removeCategoryCommand ?? (removeCategoryCommand = new RelayCommand(async (param) =>
-                {
-                    var result = await this.dialogService.ShowConfirmDialog("foo", "bar");
-                }));
-            }
-        }
         #endregion
 
         #region SelectedMovies
