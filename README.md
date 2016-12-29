@@ -32,6 +32,9 @@ var arg = $"-ss {seconds} -i \"{moviePath}\" -vf scale=160:-1 -f image2 -an -y -
 ### Windows7APICodePack
 NuGetより
 
+### Prism
+* http://compositewpf.codeplex.com/license
+
 ## 参考
 * アプリケーション
   + [WhiteBrowser](https://www12.atwiki.jp/whitebrowser/)
