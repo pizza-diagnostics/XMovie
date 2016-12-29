@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Prism.Mvvm;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -11,7 +12,7 @@ using XMovie.Service;
 
 namespace XMovie.ViewModels
 {
-    public class ToolViewModel : ViewModelBase
+    public class ToolViewModel : BindableBase
     {
         private IDialogService dialogService;
         private UserSettings userSettings = UserSettingManager.Instance.GetUserSettings();

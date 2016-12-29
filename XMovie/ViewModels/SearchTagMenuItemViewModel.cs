@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Prism.Mvvm;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -9,7 +10,7 @@ using XMovie.Models.Repository;
 
 namespace XMovie.ViewModels
 {
-    public class SearchTagMenuItemViewModel : ViewModelBase
+    public class SearchTagMenuItemViewModel : BindableBase
     {
         public SearchTagMenuItemViewModel()
         {

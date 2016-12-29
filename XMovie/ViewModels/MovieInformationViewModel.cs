@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Prism.Mvvm;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -13,7 +14,7 @@ using XMovie.Service;
 
 namespace XMovie.ViewModels
 {
-    public class MovieInformationViewModel : ViewModelBase
+    public class MovieInformationViewModel : BindableBase
     {
         private IDialogService dialogService;
 
@@ -78,11 +79,7 @@ namespace XMovie.ViewModels
                     string categoryName = (string)param;
                     using (var repos = new RepositoryService())
                     {
-                        if (repos.IsExistCategory(categoryName))
-                        {
-                            SetError("AddnewCategoryCommand", $"{categoryName}は登録済みです。");
-                        }
-                        else
+                        if (!repos.IsExistCategory(categoryName))
                         {
                             var category = repos.InsertNewCategory(categoryName);
 

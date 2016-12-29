@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿using Prism.Mvvm;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows.Input;
 using XMovie.Common;
@@ -8,7 +9,7 @@ using XMovie.Service;
 
 namespace XMovie.ViewModels
 {
-    public class TagViewModel : ViewModelBase
+    public class TagViewModel : BindableBase
     {
         private IDialogService dialogService;
 

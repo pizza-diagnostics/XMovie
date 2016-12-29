@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Prism.Mvvm;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -10,7 +11,7 @@ using XMovie.Models.Settings;
 
 namespace XMovie.ViewModels
 {
-    public class LogListViewModel : ViewModelBase
+    public class LogListViewModel : BindableBase
     {
         public ObservableCollection<LogRecord> LogRecords { get; private set; } = new ObservableCollection<LogRecord>();
 

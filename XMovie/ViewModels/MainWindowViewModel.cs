@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Prism.Mvvm;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -18,7 +19,7 @@ using XMovie.Service;
 
 namespace XMovie.ViewModels
 {
-    public class MainWindowViewModel : ViewModelBase
+    public class MainWindowViewModel : BindableBase
     {
         private Logger logger = Logger.Instace;
 
@@ -98,7 +99,7 @@ namespace XMovie.ViewModels
             {
                 if (value < 1 || value > 5)
                 {
-                    SetError("thumbnailCount", "サムネイル数は1から5に設定する必要があります。");
+                    //SetError("thumbnailCount", "サムネイル数は1から5に設定する必要があります。");
                 }
                 else
                 {
