@@ -1,4 +1,5 @@
-﻿using Prism.Commands;
+﻿using Microsoft.Practices.Unity;
+using Prism.Commands;
 using Prism.Mvvm;
 using System;
 using System.Collections.Generic;
@@ -20,10 +21,12 @@ namespace XMovie.ViewModels
 
         public void LogViewLoaded()
         {
-            Logger.Instace.LogEvent += Logger_LogEvent;
+            // TODO: 
+            var logger = App.Container.Resolve<Logger>();
+            logger.LogEvent += Logger_LogEvent;
             System.Windows.Threading.Dispatcher.CurrentDispatcher.ShutdownStarted += (s, e) =>
             {
-                Logger.Instace.LogEvent -= Logger_LogEvent;
+                logger.LogEvent -= Logger_LogEvent;
             };
         }
 

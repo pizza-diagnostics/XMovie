@@ -51,7 +51,6 @@ namespace XMovie.Models.Settings
 
         public int SorterIndex { get; set; } = 0;
 
-        public bool IsFileSearch { get; set; } = false;
         public ObservableCollection<string> SearchHistories { get; set; }
             = new ObservableCollection<string>();
 

@@ -1,4 +1,5 @@
-﻿using Prism.Commands;
+﻿using Microsoft.Practices.Unity;
+using Prism.Commands;
 using Prism.Mvvm;
 using System;
 using System.Collections.ObjectModel;
@@ -14,9 +15,9 @@ namespace XMovie.ViewModels
         private IDialogService dialogService;
         private UserSettings userSettings = UserSettingManager.Instance.GetUserSettings();
 
-        public ToolViewModel(IDialogService dialogService)
+        public ToolViewModel()
         {
-            this.dialogService = dialogService;
+            dialogService = App.Container.Resolve<IDialogService>();
 
             LoadFromSettings();
         }

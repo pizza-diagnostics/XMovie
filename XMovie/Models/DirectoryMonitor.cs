@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Practices.Unity;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
@@ -20,7 +21,7 @@ namespace XMovie.Models
 
         private List<string> targetExt;
 
-        private Logger logger = Logger.Instace;
+        private Logger logger;
 
         public event MovieNameChangedDelegate MovieNameChanged;
         public event MovieAddedDelegate MovieAdded;
@@ -33,7 +34,10 @@ namespace XMovie.Models
             get { return instance.Value; }
         }
 
-        private DirectoryMonitor() { }
+        private DirectoryMonitor()
+        {
+            logger = App.Container.Resolve<Logger>();
+        }
 
         public void StartMonitor(ICollection<DirectoryMonitorSettings> directories, List<string> extensions)
         {

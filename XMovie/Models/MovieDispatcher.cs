@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Practices.Unity;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -16,12 +17,14 @@ namespace XMovie.Models
     public class MovieDispatcher
     {
         private Dispatcher dispatcher;
-        private Logger logger = Logger.Instace;
+        private Logger logger;
 
         private volatile bool isShutdown = false;
 
         public MovieDispatcher()
         {
+            logger = App.Container.Resolve<Logger>();
+
             var source = new TaskCompletionSource<Dispatcher>();
             var thread = new Thread(new ThreadStart(() =>
             {
@@ -37,6 +40,14 @@ namespace XMovie.Models
                 isShutdown = true;
                 dispatcher.BeginInvokeShutdown(DispatcherPriority.Normal);
             };
+        }
+
+        public async Task Shutdown()
+        {
+            await dispatcher.InvokeAsync(() =>
+            {
+                isShutdown = true;
+            });
         }
 
         public async Task ImportMovie(string path, ObservableCollection<MovieItemViewModel> movieCollection)
@@ -55,6 +66,7 @@ namespace XMovie.Models
                     {
                         return;
                     }
+
                     App.Current.Dispatcher.Invoke(() =>
                     {
                         try
@@ -63,12 +75,15 @@ namespace XMovie.Models
                             {
                                 repos.InsertMovie(movie);
                             }
-                            movieCollection.Add(new MovieItemViewModel(movie.MovieId));
+                            movieCollection.Insert(0, new MovieItemViewModel(movie.MovieId));
                         }
                         catch (Exception ex)
                         {
                             logger.Error(ex);
                         }
+                        logger.Information($"登録完了 {movie.Path}");
+                        var calculator = App.Container.Resolve<MD5Calculator>();
+                        calculator.Request(movie.MovieId);
                     });
                 }
                 catch (MovieImporterException ex)
@@ -127,7 +142,7 @@ namespace XMovie.Models
                         }
                     }
                 }
-                logger.Information($"削除された動画の登録を解除しました。{moviePath}");
+                logger.Information($"動画の登録を解除しました。{moviePath}");
             });
 
         }

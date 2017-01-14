@@ -6,6 +6,7 @@
         xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
         xmlns:ic="clr-namespace:Microsoft.Expression.Interactivity.Core;assembly=Microsoft.Expression.Interactions"
         xmlns:metro="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+        xmlns:metrobehaviors="http://metro.mahapps.com/winfx/xaml/shared"
         xmlns:local="clr-namespace:XMovie"
         xmlns:common="clr-namespace:XMovie.Common"
         xmlns:behaviors="clr-namespace:XMovie.Common.Behaviors"
@@ -23,6 +24,17 @@
         Title="XMovie"
        >
 
+    <metro:MetroWindow.DataContext>
+        <vm:MainWindowViewModel />
+    </metro:MetroWindow.DataContext>
+
+    <i:Interaction.Behaviors>
+        <behaviors:WindowClosingBehavior />
+        <metrobehaviors:BorderlessWindowBehavior />
+        <metrobehaviors:WindowsSettingBehaviour />
+        <metrobehaviors:GlowWindowBehavior />
+    </i:Interaction.Behaviors>
+    
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded">
             <ic:CallMethodAction TargetObject="{Binding}" MethodName="MainWindowLoaded" />
@@ -105,7 +117,7 @@
         </Grid.RowDefinitions>
 
         <!-- 2.Search Menu -->
-        <Grid Grid.Row="0">
+        <Grid Grid.Row="0" IsEnabled="{Binding IsEnableMenu}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition />
                 <ColumnDefinition Width="Auto"/>
@@ -180,11 +192,6 @@
 
                 <metro:ProgressRing IsActive="{Binding IsSearching}" Foreground="AntiqueWhite"
                                     Width="30" Height="30" Margin="0,0,10,0"/>
-
-                <metro:ToggleSwitch VerticalAlignment="Center" OnLabel="File search" OffLabel="Tag search"
-                                    Width="130"
-                                    FontStyle="Normal" FontSize="12" FontFamily="Yu Gothic UI"
-                                    IsChecked="{Binding IsFileSearch, Mode=TwoWay}" />
 
                 <TextBlock Margin="10,10,0,10" VerticalAlignment="Center"><Run Text="Sort Order:"/></TextBlock>
                 <ComboBox ItemsSource="{Binding Sorter}" SelectedIndex="{Binding Settings.SorterIndex}"

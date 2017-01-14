@@ -105,6 +105,18 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Expression.Interactions, Version=4.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.Practices.Unity, Version=4.0.0.0, Culture=neutral, PublicKeyToken=6d32ff45e0ccc69f, processorArchitecture=MSIL">
+      <HintPath>..\packages\Unity.4.0.1\lib\net45\Microsoft.Practices.Unity.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Practices.Unity.Configuration, Version=4.0.0.0, Culture=neutral, PublicKeyToken=6d32ff45e0ccc69f, processorArchitecture=MSIL">
+      <HintPath>..\packages\Unity.4.0.1\lib\net45\Microsoft.Practices.Unity.Configuration.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Practices.Unity.RegistrationByConvention, Version=4.0.0.0, Culture=neutral, PublicKeyToken=6d32ff45e0ccc69f, processorArchitecture=MSIL">
+      <HintPath>..\packages\Unity.4.0.1\lib\net45\Microsoft.Practices.Unity.RegistrationByConvention.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Microsoft.WindowsAPICodePack, Version=1.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Windows7APICodePack-Core.1.1.0.0\lib\Microsoft.WindowsAPICodePack.dll</HintPath>
       <Private>True</Private>
@@ -116,6 +128,10 @@
     <Reference Include="PresentationFramework.Aero2" />
     <Reference Include="Prism, Version=6.2.0.0, Culture=neutral, PublicKeyToken=91a96d2a154366d8, processorArchitecture=MSIL">
       <HintPath>..\packages\Prism.Core.6.2.0\lib\net45\Prism.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Prism.Unity.Wpf, Version=6.2.0.0, Culture=neutral, PublicKeyToken=91a96d2a154366d8, processorArchitecture=MSIL">
+      <HintPath>..\packages\Prism.Unity.6.2.0\lib\net45\Prism.Unity.Wpf.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Prism.Wpf, Version=6.2.0.0, Culture=neutral, PublicKeyToken=91a96d2a154366d8, processorArchitecture=MSIL">
@@ -170,9 +186,9 @@
     <Compile Include="Common\Behaviors\FileDropBehavior.cs" />
     <Compile Include="Common\Behaviors\ListBoxSelectedItemsBehavior.cs" />
     <Compile Include="Common\Behaviors\WindowCloseBehavior.cs" />
+    <Compile Include="Common\Behaviors\WindowClosingBehavior.cs" />
     <Compile Include="Common\InverseBooleanConverter.cs" />
     <Compile Include="Common\Properties\FocusProperty.cs" />
-    <Compile Include="Common\RelayCommand.cs" />
     <Compile Include="Common\Behaviors\ScrollIntoViewBehavior.cs" />
     <Compile Include="Common\TagCommandParameterConverter.cs" />
     <Compile Include="Common\Util.cs" />
@@ -188,7 +204,16 @@
     <Compile Include="Controls\TagControl.xaml.cs">
       <DependentUpon>TagControl.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Message\AddTagEvent.cs" />
+    <Compile Include="Message\MoveMovieEvent.cs" />
+    <Compile Include="Message\RemoveCategoryEvent.cs" />
+    <Compile Include="Message\RemoveMovieEvent.cs" />
+    <Compile Include="Message\RemoveTagEvent.cs" />
+    <Compile Include="Message\SearchEvent.cs" />
+    <Compile Include="Message\UnregisterMovieEvent.cs" />
+    <Compile Include="Models\Data\XMovieContextMigration.cs" />
     <Compile Include="Models\DirectoryMonitor.cs" />
+    <Compile Include="Models\MD5Calculator.cs" />
     <Compile Include="Models\MovieDispatcher.cs" />
     <Compile Include="Models\MovieImporter.cs" />
     <Compile Include="Models\MovieImporterException.cs" />

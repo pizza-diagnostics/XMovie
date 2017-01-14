@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Practices.Unity;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -14,7 +15,12 @@ namespace XMovie.Models
 {
     public class MovieImporter
     {
-        private Logger logger = Logger.Instace;
+        private Logger logger;
+
+        public MovieImporter()
+        {
+            logger = App.Container.Resolve<Logger>();
+        }
 
         private bool CreateThumbnailDirectory()
         {
@@ -95,20 +101,17 @@ namespace XMovie.Models
                     return null;
                 }
             }
+            logger.Information($"登録処理開始 {path}");
 
             CreateThumbnailDirectory();
             Movie movie = null;
             try
             {
-                logger.Debug($"MD5計算中... {path}");
-                var md5 = Util.ComputeMD5(path);
-                logger.Debug($"MD5: {md5}");
                 var info = new FileInfo(path);
                 movie = new Movie()
                 {
                     MovieId = Guid.NewGuid().ToString(),
                     Path = path,
-                    MD5Sum = md5,
                     FileCreateDate = info.CreationTime,
                     FileModifiedDate = info.LastWriteTime,
                     RegisteredDate = DateTime.Now,

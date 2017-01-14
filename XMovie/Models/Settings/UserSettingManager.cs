@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Practices.Unity;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -16,10 +17,11 @@ namespace XMovie.Models.Settings
 
         private UserSettings userSettings;
 
-        private Logger logger = Logger.Instace;
+        private Logger logger;
 
         private UserSettingManager()
         {
+            logger = App.Container.Resolve<Logger>();
         }
 
         public static UserSettingManager Instance

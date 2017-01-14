@@ -20,6 +20,8 @@ namespace XMovie.Models.Data
         [Required]
         public string Path { get; set; }
 
+        public string Title { get; set; }
+
         public int Rank { get; set; }
         public int PlayCount { get; set; }
 

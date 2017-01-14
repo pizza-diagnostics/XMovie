@@ -41,6 +41,11 @@ namespace XMovie.Models.Repository
             return movieRepository.GetAll().ToList();
         }
 
+        public IList<Movie> FindNoMD5Movies()
+        {
+            return movieRepository.FindAll(m => String.IsNullOrEmpty(m.MD5Sum)).ToList();
+        }
+
         public Movie FindMovie(params object[] keys)
         {
             return movieRepository.Find(keys);
@@ -61,31 +66,29 @@ namespace XMovie.Models.Repository
             return movieRepository.FindDuplicateMovies(sort).ToList();
         }
 
-        public IList<Movie> FindMoviesByPathKeys(List<string> pathKeys, SortDescriptor sort)
+        public IList<Movie> FindMovies(List<string> tags, SortDescriptor sort)
         {
-            return movieRepository.FindMoviesByPathKeys(pathKeys, sort).ToList();
-        }
-
-        public IList<Movie> FindMoviesByTags(List<string> tags, SortDescriptor sort)
-        {
-            if (tags.Count() > 0)
+            if (tags.Count == 0)
             {
-                // 1. LIKE OR でTagを抽出
-                var tagList = tagRepository.FindAllTagsOr(tags).Select(t => t.TagId);
-                // 2. TagMapからMovieIdを抽出
-                var movieIdList = tagMapRepository.FindAll(tm => tagList.Contains(tm.TagId))
-                                                  .GroupBy(t => t.MovieId)
-                                                  .Select(g => new { g.Key, Count = g.Count() })
-                                                  .Where(g => g.Count >= tags.Count())
-                                                  .Select(g => g.Key)
-                                                  .ToList();
-
-                // 3. MoviesからMovieを抽出
-                return movieRepository.FindMovies(m => movieIdList.Contains(m.MovieId), sort).ToList();
+                return sort.MovieSort(movieRepository.GetAll()).ToList<Movie>();
             }
             else
             {
-                return sort.MovieSort(movieRepository.GetAll()).ToList();
+                var where = String.Join(" and ", tags.Select((k, i) => $"keywords like @p{i}"));
+                var q = $@"
+select * from Movies where Movies.MovieId in
+    (select mid from 
+        (select Movies.MovieId mid, Movies.Path || ',' || ifnull(Movies.Title, '') || ',' ||
+            ifnull((select group_concat(Tags.Name) from Tags where Tags.TagId in 
+                (select TagMaps.TagId from TagMaps where TagMaps.MovieId = Movies.MovieId)
+            ),'') keywords
+        from Movies
+        where {where}
+        {sort.GetOrderByString()}
+        )
+    )";
+
+                return context.Database.SqlQuery<Movie>(q, tags.Select(k => $"%{k}%").ToArray()).ToList<Movie>();
             }
         }
 

@@ -1,6 +1,10 @@
-﻿using System;
+﻿using Microsoft.Practices.Unity;
+using Prism.Events;
+using Prism.Mvvm;
+using System;
 using System.Threading;
 using System.Windows;
+using XMovie.Service;
 
 namespace XMovie
 {
@@ -13,6 +17,8 @@ namespace XMovie
 
         private EventWaitHandle waitHandle;
 
+        public static readonly UnityContainer Container = new UnityContainer();
+
         private void Application_Startup(object sender, StartupEventArgs e)
         {
             bool isOwned;
@@ -21,6 +27,12 @@ namespace XMovie
 
             if (isOwned)
             {
+                Container.RegisterType<IEventAggregator, EventAggregator>(new ContainerControlledLifetimeManager());
+                Container.RegisterType<IDialogService, MetroDialogService>();
+                Container.RegisterType<Models.MD5Calculator>(new ContainerControlledLifetimeManager());
+                Container.RegisterType<Common.Logger>(new ContainerControlledLifetimeManager());
+                Container.RegisterType<Models.MovieDispatcher>(new ContainerControlledLifetimeManager());
+
                 var thread = new Thread(() =>
                 {
                     while (waitHandle.WaitOne())

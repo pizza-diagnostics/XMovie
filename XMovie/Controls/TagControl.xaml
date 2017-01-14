@@ -34,7 +34,7 @@
                         Padding="0"
                         BorderThickness="0"
                         Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-                        Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type metro:MetroWindow}},Path=DataContext.RemoveCategoryCommand}"
+                        Command="{Binding RemoveCategoryCommand}"
                         CommandParameter="{Binding}"
                         >
                     <Rectangle Width="12" Height="12">
@@ -52,7 +52,7 @@
                       metro:TextBoxHelper.ClearTextButton="True" Text="{Binding AddTagText}">
 
                 <ComboBox.InputBindings>
-                    <KeyBinding Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type metro:MetroWindow}},Path=DataContext.AddTagCommand}"
+                    <KeyBinding Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type local:TagControl}},Path=DataContext.AddTagCommand}"
                                 Key="Return">
                         <KeyBinding.CommandParameter>
                             <MultiBinding Converter="{StaticResource TagConverter}">
@@ -65,7 +65,7 @@
                 </ComboBox.InputBindings>
                 <i:Interaction.Triggers>
                     <i:EventTrigger EventName="DropDownClosed">
-                        <i:InvokeCommandAction Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type metro:MetroWindow}},Path=DataContext.AddTagCommand}">
+                        <i:InvokeCommandAction Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type local:TagControl}},Path=DataContext.AddTagCommand}">
                             <i:InvokeCommandAction.CommandParameter>
                                 <MultiBinding Converter="{StaticResource TagConverter}">
                                     <Binding Path="Text" ElementName="AddTagComboBox"/>
@@ -98,7 +98,7 @@
                                     Padding="0"
                                     BorderThickness="0"
                                     Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-                                    Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type metro:MetroWindow}},Path=DataContext.RemoveTagCommand}"
+                                    Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type local:TagControl}},Path=DataContext.RemoveTagCommand}"
                                     CommandParameter="{Binding .}"
                                     >
                                 <Rectangle Width="10" Height="10" >

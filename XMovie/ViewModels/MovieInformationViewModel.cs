@@ -1,4 +1,6 @@
-﻿using Prism.Commands;
+﻿using Microsoft.Practices.Unity;
+using Prism.Commands;
+using Prism.Events;
 using Prism.Mvvm;
 using System;
 using System.Collections;
@@ -9,6 +11,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using XMovie.Common;
+using XMovie.Message;
 using XMovie.Models.Data;
 using XMovie.Models.Repository;
 using XMovie.Service;
@@ -17,18 +20,22 @@ namespace XMovie.ViewModels
 {
     public class MovieInformationViewModel : BindableBase
     {
-        private IDialogService dialogService;
+        private IEventAggregator eventAggregator = App.Container.Resolve<IEventAggregator>();
 
-        public MovieInformationViewModel(IDialogService dialogService)
+        public MovieInformationViewModel()
         {
-            this.dialogService = dialogService;
+        }
+
+        public void Initialize()
+        {
+            Subscribe();
 
             Tags = new ObservableCollection<TagViewModel>();
             using (var repos = new RepositoryService())
             {
                 foreach (var category in repos.GetAllCategories())
                 {
-                    var tagModel = new TagViewModel(dialogService)
+                    var tagModel = new TagViewModel()
                     {
                         TagCategoryId = category.TagCategoryId,
                         CategoryName = category.Name
@@ -44,11 +51,49 @@ namespace XMovie.ViewModels
             get { return selectedMovies; }
             set {
                 selectedMovies = value;
-                foreach (var tagViewModel in Tags)
+                if (Tags != null)
                 {
-                    tagViewModel.SelectedMovies = value;
+                    foreach (var tagViewModel in Tags)
+                    {
+                        tagViewModel.SelectedMovies = value;
+                    }
                 }
             }
+        }
+
+        private void Subscribe()
+        {
+            // カテゴリ削除
+            eventAggregator.GetEvent<RemoveCategoryEvent>().Subscribe(tagViewModel =>
+            {
+                var categoryId = tagViewModel.TagCategoryId;
+
+                using (var repos = new RepositoryService())
+                {
+                    repos.RemoveTagCategory(categoryId);
+                }
+
+                Tags.Remove(Tags.Where(t => t.TagCategoryId == categoryId).FirstOrDefault());
+
+            }, ThreadOption.UIThread);
+
+            // タグ削除
+            eventAggregator.GetEvent<RemoveTagEvent>().Subscribe(tag =>
+            {
+                foreach (MovieItemViewModel movie in SelectedMovies)
+                {
+                    movie.RemoveTag(tag);
+                }
+            }, ThreadOption.UIThread);
+
+            // タグ追加
+            eventAggregator.GetEvent<AddTagEvent>().Subscribe(evt =>
+            {
+                foreach (MovieItemViewModel movie in SelectedMovies)
+                {
+                    movie.AddTag(evt.Tag);
+                }
+            }, ThreadOption.UIThread);
         }
 
         #region New Category
@@ -83,7 +128,7 @@ namespace XMovie.ViewModels
                         {
                             var category = repos.InsertNewCategory(categoryName);
 
-                            Tags.Add(new TagViewModel(dialogService)
+                            Tags.Add(new TagViewModel()
                             {
                                 TagCategoryId = category.TagCategoryId,
                                 CategoryName = category.Name
@@ -103,60 +148,7 @@ namespace XMovie.ViewModels
         public ObservableCollection<TagViewModel> Tags
         {
             get { return tags; }
-            set { tags = value; }
-        }
-
-        private ICommand addTagCommand;
-        public ICommand AddTagCommand
-        {
-            get
-            {
-                return addTagCommand ?? (addTagCommand = new DelegateCommand<Tag>((tagParam) =>
-                {
-                    foreach (TagViewModel tag in Tags)
-                    {
-                        if (tag.TagCategoryId == tagParam.TagCategoryId)
-                        {
-                            tag.AddTagCommand.Execute(tagParam);
-                        }
-                    }
-                }));
-            }
-        }
-
-        private ICommand removeTagCommand;
-        public ICommand RemoveTagCommand
-        {
-            get
-            {
-                return removeTagCommand ?? (removeTagCommand = new DelegateCommand<Tag>((tagParam) =>
-                {
-                    foreach (TagViewModel tag in Tags)
-                    {
-                        tag.RemoveTagCommand.Execute(tagParam);
-                    }
-                }));
-            }
-        }
-
-        private ICommand removeCategoryCommand;
-        public ICommand RemoveCategoryCommand
-        {
-            get
-            {
-                return removeCategoryCommand ?? (removeCategoryCommand = new DelegateCommand<TagViewModel>((tagViewModel) =>
-                {
-                    var categoryId = tagViewModel.TagCategoryId;
-
-                    using (var repos = new RepositoryService())
-                    {
-                        repos.RemoveTagCategory(categoryId);
-                    }
-
-                    Tags.Remove(Tags.Where(t => t.TagCategoryId == categoryId).FirstOrDefault());
-
-                }));
-            }
+            set { SetProperty(ref tags, value, "Tags"); }
         }
 
         #endregion

@@ -1,8 +1,13 @@
-﻿using Prism.Commands;
+﻿using Microsoft.Practices.Unity;
+using Prism.Commands;
+using Prism.Events;
 using Prism.Mvvm;
+using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows.Input;
+using XMovie.Message;
+using XMovie.Models;
 using XMovie.Models.Data;
 using XMovie.Models.Repository;
 using XMovie.Service;
@@ -13,12 +18,52 @@ namespace XMovie.ViewModels
     {
         private IDialogService dialogService;
 
-        public TagViewModel(IDialogService dialogService)
+        private IEventAggregator eventAggregator;
+
+        public TagViewModel()
         {
-            this.dialogService = dialogService;
+            eventAggregator = App.Container.Resolve<IEventAggregator>();
+            dialogService = App.Container.Resolve<IDialogService>();
+
+            Subscribe();
         }
 
-        #region Category
+        private void Subscribe()
+        {
+            eventAggregator.GetEvent<RemoveTagEvent>().Subscribe(tag =>
+            {
+                var tagId = (tag).TagId;
+                var movieIdList = selectedMovies.Select(m => m.MovieId).ToList();
+
+                using (var repo = new RepositoryService())
+                {
+                    repo.RemoveTagMaps(tagId, movieIdList);
+                }
+
+                UpdateSelectedMovieTags();
+                UpdateCategoryTags();
+
+            }, ThreadOption.UIThread);
+
+            eventAggregator.GetEvent<AddTagEvent>().Subscribe(evt =>
+            {
+                // カテゴリIDが同じなら追加
+                if (evt.Sender != this && evt.Tag.TagCategoryId == TagCategoryId)
+                {
+                    if (!Tags.Any(t => t.TagId == evt.Tag.TagId))
+                    {
+                        var list = new ObservableCollection<Tag>(Tags);
+                        list.Add(evt.Tag);
+                        Tags = new ObservableCollection<Tag>(list.OrderBy(t => t.Name));
+                    }
+                    UpdateCategoryTags();
+                    AddTagText = ""; // inputのクリア 
+                }
+            },
+            ThreadOption.UIThread);
+        }
+
+#region Category
         private string categoryName;
         public string CategoryName
         {
@@ -37,9 +82,9 @@ namespace XMovie.ViewModels
             }
         }
 
-        #endregion
+#endregion
 
-        #region Tags
+#region Tags
 
         public void UpdateCategoryTags()
         {
@@ -93,7 +138,12 @@ namespace XMovie.ViewModels
         public string AddTagText
         {
             get { return addTagText; }
-            set { SetProperty(ref addTagText, value, "AddTagText"); }
+            set {
+                if (SetProperty(ref addTagText, value, "AddTagText"))
+                {
+                    // TODO
+                }
+            }
         }
 
         private ICommand addTagCommand;
@@ -101,19 +151,47 @@ namespace XMovie.ViewModels
         {
             get
             {
-                return addTagCommand ?? (addTagCommand = new DelegateCommand<Tag>((tag) =>
+                return addTagCommand ?? (addTagCommand = new DelegateCommand<TagCommandParameter>((tagParam) =>
                 {
-                    var targetMovieIdList = SelectedMovies.Select(m => m.MovieId);
-
+                    Tag tag = tagParam.Tag;
                     using (var repos = new RepositoryService())
                     {
-                        repos.SetTagToMovies(tag, targetMovieIdList.ToList());
-                    }
+                        if (tag == null)
+                        {
+                            // Tagがnullの場合は新規の可能性
+                            if (String.IsNullOrWhiteSpace(tagParam.Name))
+                                return;
+                            tag = repos.InsertNewTag(tagParam.Name, tagParam.TagCategoryId);
+                        }
 
-                    UpdateSelectedMovieTags();
-                    UpdateCategoryTags();
-                    AddTagText = ""; // inputのクリア 
-                }));
+                        eventAggregator.GetEvent<AddTagEvent>().Publish(new AddTagEventItem()
+                        {
+                            Tag = tag,
+                            Sender = this
+                        });
+
+                        // カテゴリIDが同じなら追加
+                        /*
+                        MovieInformation.AddTagCommand.Execute(tag);
+                        foreach (MovieItemViewModel movie in MovieInformation.SelectedMovies)
+                        {
+                            movie.AddTagCommand.Execute(tag);
+                        }
+                        */
+
+                        // 表示更新
+                        if (!Tags.Any(t => t.TagId == tag.TagId))
+                        {
+                            var list = new ObservableCollection<Tag>(Tags);
+                            list.Add(tag);
+                            Tags = new ObservableCollection<Tag>(list.OrderBy(t => t.Name));
+                        }
+                        UpdateCategoryTags();
+                        AddTagText = ""; // inputのクリア 
+                    }
+                },
+                (param) => { return param != null; }
+                ));
             }
         }
 
@@ -124,23 +202,31 @@ namespace XMovie.ViewModels
             {
                 return removeTagCommand ?? (removeTagCommand = new DelegateCommand<Tag>((tag) =>
                 {
-                    var tagId = (tag).TagId;
-                    var movieIdList = selectedMovies.Select(m => m.MovieId).ToList();
-
-                    using (var repo = new RepositoryService())
-                    {
-                        repo.RemoveTagMaps(tagId, movieIdList);
-                    }
-
-                    UpdateSelectedMovieTags();
-                    UpdateCategoryTags();
+                    eventAggregator.GetEvent<RemoveTagEvent>().Publish(tag);
                 }));
             }
         }
 
-        #endregion
+        private ICommand removeCategoryCommand;
+        public ICommand RemoveCategoryCommand
+        {
+            get
+            {
+                return removeCategoryCommand ?? (removeCategoryCommand = new DelegateCommand<TagViewModel>(async (tag) =>
+                {
+                    var result = await dialogService.ShowConfirmDialog("カテゴリの削除",
+                        "カテゴリを削除しますか?\n(全ての動画からカテゴリに属するすべてのタグが削除されます。)");
+                    if (result)
+                    {
+                        eventAggregator.GetEvent<RemoveCategoryEvent>().Publish(tag);
+                    }
+                }));
+            }
+        }
 
-        #region SelectedMovies
+#endregion
+
+#region SelectedMovies
 
         private ObservableCollection<MovieItemViewModel> selectedMovies;
         public ObservableCollection<MovieItemViewModel> SelectedMovies
@@ -154,6 +240,6 @@ namespace XMovie.ViewModels
             }
         }
 
-        #endregion
+#endregion
     }
 }

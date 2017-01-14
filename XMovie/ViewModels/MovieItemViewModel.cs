@@ -1,18 +1,18 @@
-﻿using Prism.Commands;
+﻿using Microsoft.Practices.Unity;
+using Prism.Commands;
+using Prism.Events;
 using Prism.Mvvm;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Data.Entity;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using XMovie.Common;
+using XMovie.Message;
 using XMovie.Models;
 using XMovie.Models.Data;
 using XMovie.Models.Repository;
@@ -22,10 +22,14 @@ namespace XMovie.ViewModels
 {
     public class MovieItemViewModel : BindableBase
     {
-        private Logger logger = Logger.Instace;
+        private Logger logger;
+
+        private IEventAggregator eventAggregator;
 
         public MovieItemViewModel()
         {
+            eventAggregator = App.Container.Resolve<IEventAggregator>();
+            logger = App.Container.Resolve<Logger>();
             ThumbnailCount = UserSettingManager.Instance.GetUserSettings().ThumbnailCount;
         }
 
@@ -38,6 +42,7 @@ namespace XMovie.ViewModels
                 Rank = movie.Rank;
                 PlayCount = movie.PlayCount;
                 Path = movie.Path;
+                Title = movie.Title;
             }
             UpdateTags();
         }
@@ -56,6 +61,13 @@ namespace XMovie.ViewModels
         public string EditFileName
         {
             get { return System.IO.Path.GetFileNameWithoutExtension(FileName); }
+        }
+
+        private bool isEditTitleMode;
+        public bool IsEditTitleMode
+        {
+            get { return isEditTitleMode; }
+            set { SetProperty(ref isEditTitleMode, value, "IsEditTitleMode"); }
         }
 
         private ObservableCollection<Tag> tags;
@@ -95,6 +107,13 @@ namespace XMovie.ViewModels
         public string FileName
         {
             get { return System.IO.Path.GetFileName(Path); }
+        }
+
+        private string title;
+        public string Title
+        {
+            get { return title; }
+            set { SetProperty(ref title, value, "Title"); }
         }
 
         private int thumbnailCount;
@@ -222,6 +241,25 @@ namespace XMovie.ViewModels
             }
         }
 
+        public void RemoveTag(Tag tag)
+        {
+            var remove = Tags.Where(t => t.TagId == (tag).TagId).FirstOrDefault();
+            Tags.Remove(remove);
+        }
+
+        public void AddTag(Tag tag)
+        {
+            var isExist = Tags.Any(t => t.TagId == tag.TagId);
+            if (!isExist)
+            {
+                using (var repos = new RepositoryService())
+                {
+                    repos.SetTagToMovies(tag, new string[] { MovieId });
+                }
+                UpdateTags();
+            }
+        }
+
         #region Command
         private ICommand changeRankCommand;
         public ICommand ChangeRankCommand
@@ -265,49 +303,6 @@ namespace XMovie.ViewModels
                     {
                         logger.Error(ex);
                     }
-                }));
-            }
-        }
-
-        private ICommand addTagCommand;
-        public ICommand AddTagCommand
-        {
-            get
-            {
-                return addTagCommand ?? (addTagCommand = new DelegateCommand<object>((param) =>
-                {
-                    var tagParam = param as Tag;
-                    if (tagParam == null)
-                    {
-                        var tag = ((SearchTagMenuItemViewModel)param).Tag;
-                        using (var repos = new RepositoryService())
-                        {
-                            repos.SetTagToMovies(tag, new string[] { MovieId });
-                        }
-                        UpdateTags();
-                    }
-                    else
-                    {
-                        var isExist = Tags.Any(t => t.TagId == tagParam.TagId);
-                        if (!isExist)
-                        {
-                            // TODO: 冗長
-                            UpdateTags();
-                        }
-                    }
-                }));
-            }
-        }
-
-        private ICommand removeTagCommand;
-        public ICommand RemoveTagCommand
-        {
-            get
-            {
-                return removeTagCommand ?? (removeTagCommand = new DelegateCommand<Tag>((tag) =>
-                {
-                    var remove = Tags.Where(t => t.TagId == (tag).TagId).FirstOrDefault();
-                    Tags.Remove(remove);
                 }));
             }
         }
@@ -401,7 +396,7 @@ namespace XMovie.ViewModels
         {
             get
             {
-                return updateThumbnailCommand ?? (updateThumbnailCommand = new DelegateCommand<MovieItemViewModel>((model) =>
+                return updateThumbnailCommand ?? (updateThumbnailCommand = new DelegateCommand<MovieItemViewModel>(model =>
                 {
                     model.IsEnabled = false;
 
@@ -419,6 +414,100 @@ namespace XMovie.ViewModels
                     }
 
                     model.IsEnabled = true;
+                }));
+            }
+        }
+
+        private ICommand unregisterMovieCommand;
+        public ICommand UnregisterMovieCommand
+        {
+            get
+            {
+                return unregisterMovieCommand ?? (unregisterMovieCommand = new DelegateCommand<MovieItemViewModel>(model =>
+                {
+                    eventAggregator.GetEvent<UnregisterMovieEvent>().Publish(model);
+                }));
+            }
+        }
+
+        private ICommand moveMovieCommand;
+        public ICommand MoveMovieCommand
+        {
+            get
+            {
+                return moveMovieCommand ?? (moveMovieCommand = new DelegateCommand<MovieItemViewModel>(model =>
+                {
+                    eventAggregator.GetEvent<MoveMovieEvent>().Publish(model);
+                }));
+            }
+        }
+
+        private ICommand removeMovieCommand;
+        public ICommand RemoveMovieCommand
+        {
+            get
+            {
+                return removeMovieCommand ?? (removeMovieCommand = new DelegateCommand<MovieItemViewModel>(model =>
+                {
+                    eventAggregator.GetEvent<RemoveMovieEvent>().Publish(model);
+                }));
+            }
+        }
+
+        private ICommand searchTagCommand;
+        public ICommand SearchTagCommand
+        {
+            get
+            {
+                return searchTagCommand ?? (searchTagCommand = new DelegateCommand<Tag>(tag =>
+                {
+                    eventAggregator.GetEvent<SearchEvent>().Publish(tag.Name);
+                }));
+            }
+        }
+
+        private ICommand beginEditTitleCommand;
+        public ICommand BeginEditTitleCommand
+        {
+            get
+            {
+                return beginEditTitleCommand ?? (beginEditTitleCommand = new DelegateCommand(() =>
+                {
+                    IsEditTitleMode = true;
+                }));
+            }
+        }
+
+        private ICommand editTitleCommand;
+        public ICommand EditTitleCommand
+        {
+            get
+            {
+                return editTitleCommand ?? (editTitleCommand = new DelegateCommand<string>(title =>
+                {
+                    Title = title;
+                    using (var repo = new RepositoryService())
+                    {
+                        var movie = repo.FindMovie(MovieId);
+                        if (movie != null)
+                        {
+                            movie.Title = Title;
+                        }
+                        repo.UpdateMovie(movie);
+                    }
+                    IsEditTitleMode = false;
+                }));
+            }
+        }
+
+        private ICommand cancelEditTitleCommand;
+        public ICommand CancelEditTitleCommand
+        {
+            get
+            {
+                return cancelEditTitleCommand ?? (cancelEditTitleCommand = new DelegateCommand<MovieItemViewModel>(model =>
+                {
+                    IsEditTitleMode = false;
                 }));
             }
         }

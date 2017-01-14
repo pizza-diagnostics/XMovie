@@ -10,30 +10,9 @@ namespace XMovie.Common
 
     public sealed class Logger
     {
-        private static readonly object syncObj = new Object();
-        private static Logger instance = null;
-
         public event LogDelegate LogEvent;
 
-        private Logger() { }
-
-        public static Logger Instace
-        {
-            get
-            {
-                if (instance == null)
-                {
-                    lock (syncObj)
-                    {
-                        if (instance == null)
-                        {
-                            instance = new Logger();
-                        }
-                    }
-                }
-                return instance;
-            }
-        }
+        public Logger() { }
 
         public void Debug(object msg)
         {

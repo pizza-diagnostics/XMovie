@@ -15,6 +15,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using MahApps.Metro.Controls;
 using XMovie.Common;
+using Prism.Mvvm;
 
 namespace XMovie
 {
@@ -23,13 +24,8 @@ namespace XMovie
     /// </summary>
     public partial class MainWindow : MetroWindow
     {
-        private Logger logger = Logger.Instace;
-
         public MainWindow()
         {
-            // InitializeComponent前にDataContextを設定しておくとLoadedが呼ばれる?
-            DataContext = new ViewModels.MainWindowViewModel(new Service.MetroDialogService());
-
             InitializeComponent();
         }
     }

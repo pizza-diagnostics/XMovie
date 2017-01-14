@@ -1,10 +1,15 @@
-﻿using Prism.Mvvm;
+﻿using Microsoft.Practices.Unity;
+using Prism.Commands;
+using Prism.Events;
+using Prism.Mvvm;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Input;
+using XMovie.Message;
 using XMovie.Models.Data;
 using XMovie.Models.Repository;
 
@@ -84,6 +89,36 @@ namespace XMovie.ViewModels
                 }
             }
             return model;
+        }
+
+        private ICommand addTagCommand;
+        public ICommand AddTagCommand
+        {
+            get
+            {
+                return addTagCommand ?? (addTagCommand = new DelegateCommand<Tag>((tag) =>
+                {
+                    var ea = App.Container.Resolve<IEventAggregator>();
+                    ea.GetEvent<AddTagEvent>().Publish(new AddTagEventItem()
+                    {
+                        Tag = tag,
+                        Sender = this
+                    });
+                }));
+            }
+        }
+
+        private ICommand removeTagCommand;
+        public ICommand RemoveTagCommand
+        {
+            get
+            {
+                return removeTagCommand ?? (removeTagCommand = new DelegateCommand<Tag>((tag) =>
+                {
+                    var ea = App.Container.Resolve<IEventAggregator>();
+                    ea.GetEvent<RemoveTagEvent>().Publish(Tag);
+                }));
+            }
         }
     }
 }

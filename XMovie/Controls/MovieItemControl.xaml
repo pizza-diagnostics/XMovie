@@ -22,7 +22,7 @@
 
     <Border Margin="0" Padding="5" Width="{Binding Path=MovieItemWidth}" Height="{Binding Path=MovieItemHeight}"
             IsEnabled="{Binding IsEnabled}">
-        <Grid Tag="{Binding RelativeSource={RelativeSource AncestorType={x:Type metroc:MetroWindow}},Path=DataContext}">
+        <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition />
                 <RowDefinition Height="*"/>
@@ -41,6 +41,10 @@
                             <VisualBrush x:Key="FileDeleteIcon" Visual="{StaticResource appbar_delete}" Stretch="Uniform"/>
                         </ResourceDictionary>
                     </ContextMenu.Resources>
+                    <MenuItem Header="タイトル変更"
+                              Command="{Binding BeginEditTitleCommand}"
+                              CommandParameter="{Binding}">
+                    </MenuItem>
                     <MenuItem Header="タグ追加" ItemsSource="{Binding AllTags}">
                         <MenuItem.Icon>
                             <Rectangle Width="20" Height="20">
@@ -57,21 +61,18 @@
                                               BorderBrush="DarkGray">
                                         <i:Interaction.Triggers>
                                             <i:EventTrigger EventName="Checked">
-                                                <i:InvokeCommandAction Command="{Binding Path=PlacementTarget.Tag.AddTagCommand,RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ContextMenu}}">
-                                                    <i:InvokeCommandAction.CommandParameter>
-                                                        <MultiBinding Converter="{StaticResource TagConverter}">
-                                                            <Binding />
-                                                        </MultiBinding>
-                                                    </i:InvokeCommandAction.CommandParameter>
+                                                <i:InvokeCommandAction Command="{Binding AddTagCommand}"
+                                                                       CommandParameter="{Binding Tag}">
                                                 </i:InvokeCommandAction>
                                             </i:EventTrigger>
                                             <i:EventTrigger EventName="Unchecked">
-                                                <i:InvokeCommandAction Command="{Binding Path=PlacementTarget.Tag.RemoveTagCommand,RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ContextMenu}}"
+                                                <i:InvokeCommandAction Command="{Binding RemoveTagCommand}"
                                                                        CommandParameter="{Binding Tag}" />
                                             </i:EventTrigger>
                                         </i:Interaction.Triggers>
                                     </CheckBox>
-                                    <TextBlock Text="{Binding Header}" />
+                                    <TextBlock Text="{Binding Header}">
+                                    </TextBlock>
                                 </StackPanel>
                             </HierarchicalDataTemplate>
                         </MenuItem.ItemTemplate>
@@ -92,7 +93,7 @@
                     </MenuItem>
                     <Separator />
                     <MenuItem Header="登録解除" 
-                              Command="{Binding Path=PlacementTarget.Tag.UnregisterMovieCommand,RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ContextMenu}}"
+                              Command="{Binding UnregisterMovieCommand}"
                               CommandParameter="{Binding}"
                               >
                     </MenuItem>
@@ -107,12 +108,12 @@
                         </MenuItem.Icon>
                     </MenuItem>
                     <MenuItem Header="ファイル移動"
-                              Command="{Binding Path=PlacementTarget.Tag.MoveMovieCommand,RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ContextMenu}}"
+                              Command="{Binding MoveMovieCommand}"
                               CommandParameter="{Binding}"
                               >
                     </MenuItem>
                     <MenuItem Header="ファイル削除"
-                              Command="{Binding Path=PlacementTarget.Tag.RemoveMovieCommand,RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ContextMenu}}"
+                              Command="{Binding RemoveMovieCommand}"
                               CommandParameter="{Binding}">
                         
                     </MenuItem>
@@ -140,16 +141,13 @@
                 </Border>
 
                 <Grid Background="#6C000000" Height="20" VerticalAlignment="Top">
-                    <Grid.Resources>
-                        <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
-                    </Grid.Resources>
                     <TextBlock TextTrimming="CharacterEllipsis"
                                VerticalAlignment="Center"
                                HorizontalAlignment="Stretch"
                                Margin="5,0" 
                                Text="{Binding Path=FileName}"/>
                     <TextBox VerticalAlignment="Center" x:Name="RenameTextBox"
-                             Visibility="{Binding IsRenameMode,Converter={StaticResource BoolToVisibility}}"
+                             metroc:VisibilityHelper.IsVisible="{Binding IsRenameMode}"
                              Text="{Binding EditFileName,Mode=OneWay}"
                              p:FocusProperty.IsFocused="{Binding IsRenameMode}"
                              metroc:TextBoxHelper.SelectAllOnFocus="True"
@@ -161,9 +159,6 @@
                             <KeyBinding Command="{Binding RenameCancelCommand}"
                                         Key="Esc" />
                         </TextBox.InputBindings>
-                        <TextBox.Triggers>
-                            
-                        </TextBox.Triggers>
                     </TextBox>
                 </Grid>
             </Grid>
@@ -173,23 +168,54 @@
                     <ColumnDefinition />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <ItemsControl ItemsSource="{Binding Tags}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Button Margin="4" Padding="0" BorderThickness="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-                                    HorizontalAlignment="Center" VerticalAlignment="Center"
-                                    Content="{Binding Path=Name}"
-                                    Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type metroc:MetroWindow}},Path=DataContext.TagSearchCommand}"
-                                    CommandParameter="{Binding}"
-                                    />
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel Orientation="Horizontal" Margin="0"/>
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                </ItemsControl>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+                    <Grid>
+                        <TextBlock Text="{Binding Title}" Margin="4,4,4,0" TextTrimming="CharacterEllipsis"/>
+                        <TextBox VerticalAlignment="Center" x:Name="TitleTextBox"
+                                 metroc:VisibilityHelper.IsVisible="{Binding IsEditTitleMode}"
+                                 Text="{Binding Title,Mode=OneWay}"
+                                 p:FocusProperty.IsFocused="{Binding IsEditTitleMode}"
+                                 metroc:TextBoxHelper.SelectAllOnFocus="True"
+                                 Margin="4,4,4,0"
+                                 HorizontalAlignment="Stretch">
+                            <TextBox.InputBindings>
+                                <KeyBinding Command="{Binding EditTitleCommand}"
+                                            Key="Return"
+                                            CommandParameter="{Binding ElementName=TitleTextBox,Path=Text}" />
+                                <KeyBinding Command="{Binding CancelEditTitleCommand}"
+                                            Key="Esc" />
+                            </TextBox.InputBindings>
+
+                            <i:Interaction.Triggers>
+                                <i:EventTrigger EventName="LostFocus">
+                                    <i:InvokeCommandAction Command="{Binding EditTitleCommand}"
+                                                           CommandParameter="{Binding ElementName=TitleTextBox,Path=Text}" />
+                                </i:EventTrigger>
+                            </i:Interaction.Triggers>
+                        </TextBox>
+                    </Grid>
+                    <ItemsControl Grid.Row="1" ItemsSource="{Binding Tags}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Margin="4" Padding="0" BorderThickness="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                                        Content="{Binding Path=Name}"
+                                        Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type local:MovieItemControl}},Path=DataContext.SearchTagCommand}"
+                                        CommandParameter="{Binding}"
+                                        />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal" Margin="0"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+                </Grid>
                 <StackPanel Grid.Column="1" Orientation="Vertical">
                     <StackPanel Orientation="Horizontal"
                                 HorizontalAlignment="Right"
