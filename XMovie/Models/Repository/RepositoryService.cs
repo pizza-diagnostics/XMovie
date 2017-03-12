@@ -84,9 +84,9 @@ select * from Movies where Movies.MovieId in
             ),'') keywords
         from Movies
         where {where}
-        {sort.GetOrderByString()}
         )
-    )";
+    )
+{sort.GetOrderByString()}";
 
                 return context.Database.SqlQuery<Movie>(q, tags.Select(k => $"%{k}%").ToArray()).ToList<Movie>();
             }

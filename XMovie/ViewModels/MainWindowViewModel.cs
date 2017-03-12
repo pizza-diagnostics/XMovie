@@ -473,7 +473,7 @@ namespace XMovie.ViewModels
         }
 
         private string searchKeywords;
-        public string SearchKeywords
+        private string SearchKeywords
         {
             get { return searchKeywords; }
             set { SetProperty(ref searchKeywords, value, "SearchKeywords"); }
@@ -483,7 +483,10 @@ namespace XMovie.ViewModels
         {
             if (Settings.SearchHistories.Contains(keywords))
             {
-                Settings.SearchHistories.Move(Settings.SearchHistories.IndexOf(keywords), 0);
+                if (Settings.SearchHistories.IndexOf(keywords) > 0)
+                {
+                    Settings.SearchHistories.Move(Settings.SearchHistories.IndexOf(keywords), 0);
+                }
             }
             else
             {
